@@ -29,7 +29,8 @@ class Student extends Model
         'start_at' => 'date',
         'end_at' => 'date',
         'completed_at' => 'date',
-
+        'business_id' => 'integer',
+        'programme_id' => 'integer',
     ];
 
     public function business(): BelongsTo

@@ -30,6 +30,10 @@ class Certificate extends Model
         'end_date' => 'date',
         'issued_at' => 'datetime',
         'is_guest' => 'boolean',
+        'business_id' => 'integer',
+        'student_id' => 'integer',
+        'certificate_template_id' => 'integer',
+        'programme_id' => 'integer',
     ];
 
     protected static function booted(): void

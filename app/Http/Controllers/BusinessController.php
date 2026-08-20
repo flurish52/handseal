@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -37,10 +38,13 @@ class BusinessController extends Controller
             return redirect()->route('dashboard');
         }
 
-        Auth::user()?->businesses()->create(
-            $request->safe()->except('referral_code')
-        );
+        $data = $request->safe()->except(['referral_code', 'logo']);
 
+        if ($request->hasFile('logo')) {
+            $data['logo_path'] = $request->file('logo')->store('business-logos', 'public');
+        }
+
+        Auth::user()?->businesses()->create($data);
 
         $this->attachReferralIfPresent($request->validated('referral_code'));
 
@@ -111,7 +115,17 @@ class BusinessController extends Controller
     {
         $business = Auth::user()->businesses()->firstOrFail();
 
-        $business->update($request->safe()->only(['business_name', 'is_publicly_visible']));
+        $data = $request->safe()->only(['business_name', 'address', 'is_publicly_visible']);
+
+        if ($request->hasFile('logo')) {
+            // Remove the old file so replacing a logo doesn't leave orphans in storage.
+            if ($business->logo_path) {
+                Storage::disk('public')->delete($business->logo_path);
+            }
+            $data['logo_path'] = $request->file('logo')->store('business-logos', 'public');
+        }
+
+        $business->update($data);
 
         $this->attachReferralIfPresent($request->validated('referral_code'));
 

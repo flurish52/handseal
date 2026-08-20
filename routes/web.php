@@ -8,36 +8,30 @@ use App\Http\Controllers\CertificateTemplateRequestController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DirectoryController;
 use App\Http\Controllers\GuestCertificateController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgrammeController;
 use App\Http\Controllers\ReferralController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\VerificationController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+
+Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/verify', [VerificationController::class, 'lookup'])->name('verify.lookup');
 Route::get('/verify/{certificateNumber}', [VerificationController::class, 'show'])->name('verify.show');
 Route::get('/directory', [DirectoryController::class, 'index'])->name('directory.index');
 Route::post('/payments/webhook', [PaymentController::class, 'webhook'])->name('payments.webhook');
 
-Route::get('/terms', fn () => Inertia::render('Legal/TermsOfService', [
+Route::get('/terms', fn() => Inertia::render('Legal/TermsOfService', [
     'isAuthenticated' => auth()->check(),
     'canRegister' => \Illuminate\Support\Facades\Route::has('register'),
 ]))->name('terms.service');
 
-Route::get('/privacy', fn () => Inertia::render('Legal/PrivacyPolicy', [
+Route::get('/privacy', fn() => Inertia::render('Legal/PrivacyPolicy', [
     'isAuthenticated' => auth()->check(),
     'canRegister' => \Illuminate\Support\Facades\Route::has('register'),
 ]))->name('privacy.policy');
@@ -45,8 +39,11 @@ Route::get('/privacy', fn () => Inertia::render('Legal/PrivacyPolicy', [
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('auth.google');
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
 
+//Onboarding route was suppose to be an auth route but was added here because of the sessions it was loosing due to captureReferralCode not running before auth middleware
 Route::get('/onboarding', [BusinessController::class, 'create'])->name('business.create');
 
+Route::get('/certificates/preview', [CertificateController::class, 'preview'])->name('certificates.preview');
+Route::get('/certificates/guest/preview', [CertificateController::class, 'previewGuest'])->name('certificates.guest.preview');
 
 
 Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureBusinessExists::class])->group(function () {
@@ -60,8 +57,6 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureBusinessExists
     Route::delete('/programmes/{programme}', [ProgrammeController::class, 'destroy'])->name('programmes.destroy');
 
 
-
-
     Route::get('/students', [StudentController::class, 'index'])->name('students.index');
     Route::post('/students', [StudentController::class, 'store'])->name('students.store');
     Route::put('/students/{student}', [StudentController::class, 'update'])->name('students.update');
@@ -69,8 +64,6 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureBusinessExists
     Route::patch('/students/{student}/complete', [StudentController::class, 'complete'])->name('students.complete');
     Route::patch('/students/{student}/uncomplete', [StudentController::class, 'uncomplete'])->name('students.uncomplete');
 
-    Route::get('/certificates/preview', [CertificateController::class, 'preview'])->name('certificates.preview');
-    Route::get('/certificates/guest/preview', [CertificateController::class, 'previewGuest'])->name('certificates.guest.preview');
 
 // Onboarding — no business-exists check here, this route creates the business
     Route::post('/onboarding', [BusinessController::class, 'store'])->name('business.store');
@@ -87,9 +80,6 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureBusinessExists
     Route::post('/certificates', [CertificateController::class, 'store'])->name('certificates.store');
     Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])
         ->name('certificates.download');
-
-
-
 
 
     Route::get('/referrals', [ReferralController::class, 'index'])->name('referrals.index');
@@ -123,20 +113,19 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    });
-
+});
 
 
 // Admin-facing — adjust prefix/middleware to match however admin routes are grouped elsewhere in your app
-    Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
-        Route::get('/certificate-template-requests', [CertificateTemplateRequestController::class, 'index'])
-            ->name('certificate-template-requests.index');
-        Route::patch('/certificate-template-requests/{certificateTemplateRequest}/claim', [CertificateTemplateRequestController::class, 'claim'])
-            ->name('certificate-template-requests.claim');
-        Route::post('/certificate-template-requests/{certificateTemplateRequest}/generate', [CertificateTemplateRequestController::class, 'generate'])
-            ->name('certificate-template-requests.generate');
-        Route::post('/certificate-template-requests/{certificateTemplateRequest}/decline', [CertificateTemplateRequestController::class, 'decline'])
-            ->name('certificate-template-requests.decline');
-    });
+Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () {
+    Route::get('/certificate-template-requests', [CertificateTemplateRequestController::class, 'index'])
+        ->name('certificate-template-requests.index');
+    Route::patch('/certificate-template-requests/{certificateTemplateRequest}/claim', [CertificateTemplateRequestController::class, 'claim'])
+        ->name('certificate-template-requests.claim');
+    Route::post('/certificate-template-requests/{certificateTemplateRequest}/generate', [CertificateTemplateRequestController::class, 'generate'])
+        ->name('certificate-template-requests.generate');
+    Route::post('/certificate-template-requests/{certificateTemplateRequest}/decline', [CertificateTemplateRequestController::class, 'decline'])
+        ->name('certificate-template-requests.decline');
+});
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

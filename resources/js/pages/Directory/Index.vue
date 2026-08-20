@@ -35,10 +35,17 @@ function submit() {
                 <div
                     v-for="business in props.businesses"
                     :key="business.business_name"
-                    class="bg-white rounded-card border border-seal-line p-4 flex items-center justify-between"
+                    class="bg-white rounded-card border border-seal-line p-4 flex items-center gap-3"
                 >
-                    <p class="text-sm font-medium text-seal-ink">{{ business.business_name }}</p>
-                    <p class="text-xs text-seal-muted">{{ business.certificates_count }} issued</p>
+                    <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-seal-line/20 flex items-center justify-center">
+                        <img v-if="business.logo_path" :src="`storage/${business.logo_path}`" class="w-full h-full object-cover" />
+                        <span v-else class="text-sm font-semibold text-seal-muted">{{ business.business_name?.[0] }}</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-seal-ink">{{ business.business_name }}</p>
+                        <p v-if="business.address" class="text-xs text-seal-muted">{{ business.address }}</p>
+                    </div>
+<!--                    <p class="text-xs text-seal-muted">{{ business.certificates_count }} issued</p>-->
                 </div>
 
                 <p v-if="props.businesses.length === 0" class="text-sm text-seal-muted text-center py-8">

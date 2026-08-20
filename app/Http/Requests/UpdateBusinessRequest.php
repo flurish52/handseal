@@ -17,6 +17,8 @@ class UpdateBusinessRequest extends FormRequest
             'business_name' => ['required', 'string', 'max:255'],
             'is_publicly_visible' => ['required', 'boolean'],
             'referral_code' => ['nullable', 'string', 'exists:users,referral_code'],
+            'address' => ['nullable', 'string', 'max:255'],
+            'logo' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:5120'],
         ];
     }
 }

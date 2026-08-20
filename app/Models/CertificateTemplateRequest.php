@@ -22,6 +22,8 @@ class CertificateTemplateRequest extends Model
     protected $casts = [
         'images' => 'array',
         'reviewed_at' => 'datetime',
+        'business_id' => 'integer',
+        'certificate_template_id' => 'integer',
     ];
 
     public function business()

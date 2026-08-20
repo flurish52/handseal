@@ -20,6 +20,8 @@ class Referral extends Model
 
     protected $casts = [
         'paid_at' => 'datetime',
+        'referrer_user_id' => 'integer',
+        'referred_user_id' => 'integer',
     ];
 
     public function referrer(): BelongsTo

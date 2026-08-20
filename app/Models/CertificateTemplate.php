@@ -18,6 +18,13 @@ class CertificateTemplate extends Model
         'status',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'business_id' => 'integer',
+        ];
+    }
+
     public function business(): BelongsTo
     {
         return $this->belongsTo(Business::class);

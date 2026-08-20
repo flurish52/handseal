@@ -21,10 +21,12 @@ class DirectoryController extends Controller
             })
             ->withCount('certificates')
             ->orderBy('business_name')
-            ->get(['id', 'business_name'])
+            ->get(['id', 'business_name', 'address', 'logo_path'])
             ->map(fn (Business $business) => [
                 'business_name' => $business->business_name,
                 'certificates_count' => $business->certificates_count,
+                'address' => $business->address,
+                'logo_path' => $business->logo_path,
             ]);
 
         return Inertia::render('Directory/Index', [

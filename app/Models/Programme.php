@@ -20,6 +20,7 @@ class Programme extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'business_id' => 'integer',
     ];
 
     public function business(): BelongsTo

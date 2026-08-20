@@ -27,6 +27,8 @@ class Payment extends Model
         return [
             'paid_at' => 'datetime',
             'metadata' => 'array',
+            'business_id' => 'integer',
+            'certificate_id' => 'integer',
         ];
     }
 

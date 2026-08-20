@@ -96,42 +96,52 @@ const filteredCertificates = computed(() =>
 <template>
     <Head title="Certificates" />
      <div class="p-4 space-y-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="font-serif text-xl font-semibold text-seal-navy">Certificates Issued</h1>
-                    <p v-if="hasActiveSearchOrFilters" class="text-xs text-seal-muted mt-1">
-                        Showing {{ filteredCertificates.length }} of {{ props.certificates.length }}
-                    </p>
-                </div>
+         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+             <div>
+                 <h1 class="font-serif text-xl font-semibold text-seal-navy">Certificates Issued</h1>
+                 <p v-if="hasActiveSearchOrFilters" class="text-xs text-seal-muted mt-1">
+                     Showing {{ filteredCertificates.length }} of {{ props.certificates.length }}
+                 </p>
+             </div>
 
-                <div class="relative">
-                    <button
-                        @click="showIssueMenu = !showIssueMenu"
-                        class="bg-seal-navy text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5"
-                    >
-                        <Icon name="plus" :size="16" />
-                        Issue
-                    </button>
+             <div class="flex items-center gap-2">
+                 <Link
+                     :href="route('certificate-templates.index')"
+                     class="flex-1 sm:flex-none text-sm font-medium text-white bg-seal-brass px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 hover:bg-seal-brass/90"
+                 >
+                     <Icon name="palette" :size="16" />
+                     Templates
+                 </Link>
 
-                    <div
-                        v-if="showIssueMenu"
-                        class="absolute right-0 mt-2 w-44 rounded-lg bg-white shadow-lg ring-1 ring-black/5 py-1 z-20"
-                    >
-                        <Link
-                            :href="route('students.index')"
-                            class="block px-3 py-2 text-sm text-seal-ink hover:bg-seal-paper"
-                        >
-                            For a student
-                        </Link>
-                        <Link
-                            :href="route('certificates.guest.create')"
-                            class="block px-3 py-2 text-sm text-seal-ink hover:bg-seal-paper"
-                        >
-                            For a guest
-                        </Link>
-                    </div>
-                </div>
-            </div>
+                 <div class="relative flex-1 sm:flex-none">
+                     <button
+                         @click="showIssueMenu = !showIssueMenu"
+                         class="w-full bg-seal-navy text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center justify-center gap-1.5"
+                     >
+                         <Icon name="plus" :size="16" />
+                         Issue
+                     </button>
+
+                     <div
+                         v-if="showIssueMenu"
+                         class="absolute right-0 mt-2 w-44 rounded-lg bg-white shadow-lg ring-1 ring-black/5 py-1 z-20"
+                     >
+                         <Link
+                             :href="route('students.index')"
+                             class="block px-3 py-2 text-sm text-seal-ink hover:bg-seal-paper"
+                         >
+                             For a student
+                         </Link>
+                         <Link
+                             :href="route('certificates.guest.create')"
+                             class="block px-3 py-2 text-sm text-seal-ink hover:bg-seal-paper"
+                         >
+                             For a guest
+                         </Link>
+                     </div>
+                 </div>
+             </div>
+         </div>
 
             <div v-if="props.certificates.length > 0" class="flex flex-col sm:flex-row gap-2.5">
                 <div class="flex-1">

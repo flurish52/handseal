@@ -116,8 +116,12 @@
     "file": "assets/instrument-sans-600-normal-B9e8oLYv.woff",
     "src": "_instrument-sans-600-normal-B9e8oLYv.woff"
   },
+  "_useImageCompression-B5tsJM1i.js": {
+    "file": "assets/useImageCompression-B5tsJM1i.js",
+    "name": "useImageCompression"
+  },
   "resources/css/app.css": {
-    "file": "assets/app-nIGQUW4-.css",
+    "file": "assets/app-Ct7Cr6QC.css",
     "name": "app",
     "names": [
       "app.css"
@@ -126,7 +130,7 @@
     "isEntry": true
   },
   "resources/js/app.js": {
-    "file": "assets/app-Dq_n7i6l.js",
+    "file": "assets/app-CeU5TMRz.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true,
@@ -165,7 +169,7 @@
       "resources/js/pages/Welcome.vue"
     ],
     "css": [
-      "assets/app-nIGQUW4-.css"
+      "assets/app-Ct7Cr6QC.css"
     ]
   },
   "resources/js/pages/Auth/ConfirmPassword.vue": {
@@ -242,26 +246,27 @@
     ]
   },
   "resources/js/pages/Business/Create.vue": {
-    "file": "assets/Create-BmaZ1fjE.js",
+    "file": "assets/Create-DROl1x5N.js",
     "name": "Create",
     "src": "resources/js/pages/Business/Create.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_dist-DcAF4TmU.js"
+      "_dist-DcAF4TmU.js",
+      "_useImageCompression-B5tsJM1i.js"
     ]
   },
   "resources/js/pages/Business/Edit.vue": {
-    "file": "assets/Edit-BDL7aILi.js",
+    "file": "assets/Edit-BjN8b3Fd.js",
     "name": "Edit",
     "src": "resources/js/pages/Business/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
       "_dist-DcAF4TmU.js",
-      "_AppLayout-CelA0GIY.js"
+      "_useImageCompression-B5tsJM1i.js"
     ]
   },
   "resources/js/pages/CertificateTemplates/Index.vue": {
-    "file": "assets/Index-v_j_pXA-.js",
+    "file": "assets/Index-DR-5BJqU.js",
     "name": "Index",
     "src": "resources/js/pages/CertificateTemplates/Index.vue",
     "isDynamicEntry": true,
@@ -281,7 +286,7 @@
     ]
   },
   "resources/js/pages/Certificates/Index.vue": {
-    "file": "assets/Index-cSOXBH_s.js",
+    "file": "assets/Index-CqM1RH6s.js",
     "name": "Index",
     "src": "resources/js/pages/Certificates/Index.vue",
     "isDynamicEntry": true,
@@ -302,7 +307,7 @@
     ]
   },
   "resources/js/pages/Directory/Index.vue": {
-    "file": "assets/Index-CbVoarYO.js",
+    "file": "assets/Index-Ci6CnhJL.js",
     "name": "Index",
     "src": "resources/js/pages/Directory/Index.vue",
     "isDynamicEntry": true,

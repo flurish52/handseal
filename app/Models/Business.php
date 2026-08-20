@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,16 +15,29 @@ class Business extends Model
     protected $fillable = [
         'owner_id',
         'business_name',
+        'address',
         'trade_category',
         'is_publicly_visible',
         'subscription_active_until',
+        'logo_path'
     ];
 
     protected $casts = [
         'is_publicly_visible' => 'boolean',
         'subscription_active_until' => 'datetime',
+        'owner_id' => 'integer',
     ];
 
+    protected $appends = ['logo_url']; // merge with any existing $appends
+
+    protected function logoUrl(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->logo_path
+                ? \Storage::disk('public')->url($this->logo_path)
+                : null,
+        );
+    }
     public function owner(): BelongsTo
     {
         return $this->belongsTo(User::class, 'owner_id');

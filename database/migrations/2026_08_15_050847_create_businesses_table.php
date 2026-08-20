@@ -17,8 +17,9 @@ return new class extends Migration
 
             $table->string('business_name');
             $table->string('trade_category')->nullable();
-            $table->boolean('is_publicly_visible')->default(false);
-
+            $table->string('address')->nullable();
+            $table->boolean('is_publicly_visible')->default(true);
+            $table->string('logo_path')->nullable();
             $table->timestamps();
 
             $table->index('business_name');
