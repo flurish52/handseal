@@ -32,7 +32,6 @@ const submit = () => {
 </script>
 
 <template>
-    <GuestLayout>
         <Head title="Reset Password" />
 
         <form @submit.prevent="submit">
@@ -97,5 +96,4 @@ const submit = () => {
                 </PrimaryButton>
             </div>
         </form>
-    </GuestLayout>
 </template>

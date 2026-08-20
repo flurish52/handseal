@@ -11,35 +11,53 @@ export default {
     theme: {
         extend: {
             colors: {
-                // Brand — reference these everywhere as bg-seal-navy, text-seal-ink, etc.
-                // Never hardcode hex values in components. Change the business's look by editing only this block.
                 seal: {
-                    navy: '#1F2547',     // primary — headers, nav, primary buttons, trust/authority
-                    'navy-light': '#2E3564', // hover/active state of navy
-                    brass: '#B8863B',    // secondary — the "seal" accent: badges, seals, gold-foil cert elements
-                    'brass-light': '#D3A75C', // hover/active state of brass
-                    sage: '#3F6B52',     // tertiary — success / "completed" / active-student status
-                    paper: '#F7F5F0',    // app background — warm off-white, evokes certificate stock
-                    ink: '#1B1F2A',      // primary text
-                    muted: '#7C8598',    // secondary text, placeholders, captions
-                    line: '#E4E0D6',     // borders, dividers
-                    danger: '#C0392B',   // errors, destructive actions
+                    navy: '#101a30',
+                    'navy-light': '#2E3564',
+                    'navy-2': '#16223e',
+                    'navy-3': '#0b1324',
+
+                    brass: '#c79a46',
+                    'brass-light': '#e7c577',
+                    'brass-dim': '#8a6a30',
+
+
+                    sage: '#5f7a5b',
+                    'sage-light': '#e7ede4',
+
+
+                    paper: '#f7f1e1',
+                    'paper-2': '#efe5cc',
+
+
+                    ink: '#1b1810',
+
+
+                    muted: '#75694f',
+                    'muted-dark': '#a9b2c8',
+
+
+                    danger: '#a8442e',
+                    'danger-light': '#f4e3de',
+
+
+                    line: 'rgba(27,24,16,.14)',
+                    'line-dark': 'rgba(231,197,119,.18)',
                 },
             },
 
+
             fontFamily: {
-                // font-serif -> certificates, section headers, anything that should feel official
-                serif: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
-                // font-sans -> default. All app UI: forms, lists, dashboard, nav
+                serif: ['Fraunces', 'Georgia', 'ui-serif', 'serif'],
                 sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-                // font-mono -> certificate numbers, verification codes, anything meant to be read digit-by-digit
                 mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
             },
 
+
             borderRadius: {
-                // Centralized so card/button rounding stays consistent without repeating a value everywhere
                 card: '14px',
             },
+
         },
     },
 

@@ -45,4 +45,14 @@ return [
     */
     'referral_reward_percent' => 25,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Payments
+    |--------------------------------------------------------------------------
+    */
+    'onboarding_fee_kobo' => env('HANDSEAL_ONBOARDING_FEE_KOBO', 200000),
+    'free_certificates_before_onboarding' => 1,
+    'free_certificates_after_onboarding' => 10,
+    'pay_as_you_go_kobo' => 20000, // ₦200
+    'subscription_monthly_kobo' => 100000, // ₦1000 monthly
 ];
