@@ -43,6 +43,14 @@ const props = defineProps({
             <Link :href="route('verify.lookup')" class="block text-center text-xs text-seal-muted mt-4">
                 Verify another certificate
             </Link>
+
+            <div class="flex w-full items-center justify-center my-6">
+
+                <Link :href="route('directory.index')"
+                      class="text-xs text-seal-brass hover:text-seal-ink transition-colors">
+                    Find a business
+                </Link>
+            </div>
         </div>
     </div>
 </template>

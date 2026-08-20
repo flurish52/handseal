@@ -19,7 +19,7 @@
 defineProps({
     label: { type: String, default: 'Add new' },
     href: { type: String, default: null },
-    newTab: { type: Boolean, default: true },
+    newTab: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['click']);

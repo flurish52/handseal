@@ -1,7 +1,7 @@
 <script setup>
-import { useForm, router } from '@inertiajs/vue3';
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
-import AddNewLink from '@/Components/AddNewLink.vue';
+import ProgrammeSelect from '@/Components/Programme/ProgrammeSelect.vue';
+import {useForm} from "@inertiajs/vue3";
 
 const props = defineProps({
     open: { type: Boolean, required: true },
@@ -73,6 +73,18 @@ watch(
     },
 );
 
+// Recalculate end date (and default the start date) whenever the
+// programme changes — covers both picking an existing one and
+// picking one just created via ProgrammeSelect's inline modal.
+watch(
+    () => form.programme_id,
+    () => {
+        if (!props.open || props.student) return;
+        if (!form.start_at) form.start_at = todayStr();
+        recalcEndDate();
+    },
+);
+
 function close() {
     if (form.processing) return;
     emit('close');
@@ -99,38 +111,8 @@ function onKeydown(e) {
     if (e.key === 'Escape' && props.open) close();
 }
 
-const NEW_PROGRAMME_VALUE = '__new_programme__';
-
-function onProgrammeChange(event) {
-    const value = event.target.value;
-
-    if (value === NEW_PROGRAMME_VALUE) {
-        event.target.value = form.programme_id ?? '';
-        window.open(route('programmes.index'), '_blank', 'noopener,noreferrer');
-        return;
-    }
-
-    form.programme_id = value;
-
-    if (!props.student) {
-        if (!form.start_at) form.start_at = todayStr();
-        recalcEndDate();
-    }
-}
-
-function refreshProgrammes() {
-    if (!props.open) return;
-    router.reload({ only: ['programmes'], preserveScroll: true, preserveState: true });
-}
-
-onMounted(() => {
-    document.addEventListener('keydown', onKeydown);
-    window.addEventListener('focus', refreshProgrammes);
-});
-onUnmounted(() => {
-    document.removeEventListener('keydown', onKeydown);
-    window.removeEventListener('focus', refreshProgrammes);
-});
+onMounted(() => document.addEventListener('keydown', onKeydown));
+onUnmounted(() => document.removeEventListener('keydown', onKeydown));
 </script>
 
 <template>
@@ -192,22 +174,12 @@ onUnmounted(() => {
                     </div>
 
                     <div>
-                        <div class="flex items-center justify-between mb-1">
-                            <label class="block text-xs font-medium text-seal-muted">Programme</label>
-                        </div>
-
-                        <select
-                            :value="form.programme_id"
-                            @change="onProgrammeChange"
-                            class="w-full rounded-lg border border-seal-line px-3 py-2 text-sm text-seal-ink focus:outline-none focus:ring-2 focus:ring-seal-navy/40 focus:border-seal-navy"
-                        >
-                            <option value="" disabled>Select a programme</option>
-                            <option :value="NEW_PROGRAMME_VALUE">+ Add new programme…</option>
-                            <option v-for="p in programmes" :key="p.id" :value="p.id">{{ p.name }}</option>
-                        </select>
-
-
-                        <p v-if="form.errors.programme_id" class="text-xs text-seal-danger mt-1">{{ form.errors.programme_id }}</p>
+                        <label class="block text-xs font-medium text-seal-muted mb-1">Programme</label>
+                        <ProgrammeSelect
+                            v-model="form.programme_id"
+                            :programmes="programmes"
+                            :error="form.errors.programme_id"
+                        />
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">

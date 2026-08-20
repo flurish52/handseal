@@ -76,6 +76,7 @@ const menuRef = ref(null);
 const links = computed(() => [
     { label: 'Certificate templates', icon: 'edit', href: route('certificate-templates.index') },
     { label: 'Referrals', icon: 'referral', href: route('referrals.index') },
+    { label: 'Verify Certificate', icon: 'verify', href: route('verify.lookup') },
     { label: 'Settings', icon: 'settings', href: route('business.edit') },
 ]);
 

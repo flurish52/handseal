@@ -1,6 +1,7 @@
 <script setup>
-import { ref } from 'vue';
-import { Head, router } from '@inertiajs/vue3';
+import {ref} from 'vue';
+import {Head, router} from '@inertiajs/vue3';
+import {Link} from "@inertiajs/vue3";
 
 const certificateNumber = ref('');
 
@@ -12,7 +13,7 @@ function submit() {
 </script>
 
 <template>
-    <Head title="Verify a certificate" />
+    <Head title="Verify a certificate"/>
 
     <div class="min-h-screen bg-seal-paper flex items-center justify-center p-6">
         <div class="w-full max-w-sm">
@@ -34,6 +35,13 @@ function submit() {
                     Verify
                 </button>
             </form>
+            <div class="flex w-full items-center justify-center my-6">
+
+                <Link :href="route('directory.index')"
+                      class="text-xs text-seal-muted hover:text-seal-ink transition-colors">
+                    Find a business
+                </Link>
+            </div>
         </div>
     </div>
 </template>
