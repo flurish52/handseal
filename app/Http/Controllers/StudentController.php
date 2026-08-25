@@ -22,10 +22,6 @@ class StudentController extends Controller
                 ->latest()
                 ->get(),
             'programmes' => $business->programmes()->where('is_archived', false)->get(['id', 'name', 'typical_duration']),
-            'builtins' => [
-                ['key' => 'classic-navy', 'label' => 'Classic Navy & Brass'],
-            ],
-            'customTemplates' => $business->certificateTemplates()->where('status', 'active')->get(['id', 'name']),
         ]);
     }
 

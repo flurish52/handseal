@@ -14,9 +14,9 @@ class StoreProgrammeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'price' => ['nullable', 'numeric', 'min:0'],
-            'typical_duration' => ['nullable', 'string', 'max:100'],
+            'name' => 'required|string|max:255',
+            'price' => 'nullable|numeric|min:0',
+            'typical_duration' => 'nullable|integer|min:1',
         ];
     }
 }

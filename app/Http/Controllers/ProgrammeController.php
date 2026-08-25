@@ -24,21 +24,15 @@ class ProgrammeController extends Controller
 // ProgrammeController@store
     public function store(StoreProgrammeRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'price' => 'nullable|numeric|min:0',
-            'typical_duration' => 'nullable|integer|min:1',
-        ]);
-
         $business = Auth::user()->businesses()->firstOrFail();
 
-        $programme = $business->programmes()->create($validated);
+        $programme = $business->programmes()->create($request->validated());
 
         if ($request->wantsJson()) {
             return response()->json($programme, 201);
         }
 
-        return back()->with('programme', $programme);
+        return back()->with('success', 'Programme added.');
     }
 
     public function update(UpdateProgrammeRequest $request, Programme $programme): RedirectResponse

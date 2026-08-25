@@ -6,6 +6,7 @@ use App\Models\CertificateTemplateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class CertificateTemplateRequestController extends Controller
@@ -13,29 +14,31 @@ class CertificateTemplateRequestController extends Controller
     public function store(RequestCertificateTemplateRequest $request): RedirectResponse
     {
         $business = Auth::user()->businesses()->firstOrFail();
-        $images = $request->file('images', []);
+        $voucher = $business->unusedTemplateRequestVoucher();
 
-        $storedImages = collect($images)->map(function (UploadedFile $image) use ($business) {
+        if (! $voucher) {
+            return redirect()->route('payments.template-request-fee');
+        }
+
+        $storedImages = collect($request->file('images', []))->map(function (UploadedFile $image) use ($business) {
             $path = $image->store("certificate-template-requests/{$business->id}", 'local');
-
-            return [
-                'path' => $path,
-                'original_name' => $image->getClientOriginalName(),
-                'mime_type' => $image->getClientMimeType(),
-            ];
+            return ['path' => $path, 'original_name' => $image->getClientOriginalName(), 'mime_type' => $image->getClientMimeType()];
         })->all();
 
-        $business->certificateTemplateRequests()->create([
-            'name' => $request->validated('name'),
-            'description' => $request->validated('description'),
-            'sample_type' => $request->validated('sample_type', 'template'),
-            'images' => $storedImages,
-            'status' => 'pending',
-        ]);
+        DB::transaction(function () use ($business, $request, $storedImages, $voucher) {
+            $voucher->update(['used_at' => now()]);
+
+            $business->certificateTemplateRequests()->create([
+                'name' => $request->validated('name'),
+                'description' => $request->validated('description'),
+                'sample_type' => $request->validated('sample_type', 'template'),
+                'images' => $storedImages,
+                'status' => 'pending',
+            ]);
+        });
 
         return back()->with('success', "Request submitted. We'll design it and let you know when it's ready to review.");
     }
-
     // A pending request the business changed their mind about, or a declined
     // one they don't want to resubmit. Completed requests can't be cancelled —
     // delete the template instead, from CertificateTemplateController::destroy.

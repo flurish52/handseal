@@ -53,6 +53,8 @@ return [
     'onboarding_fee_kobo' => env('HANDSEAL_ONBOARDING_FEE_KOBO', 200000),
     'free_certificates_before_onboarding' => 1,
     'free_certificates_after_onboarding' => 10,
-    'pay_as_you_go_kobo' => 20000, // ₦200
-    'subscription_monthly_kobo' => 100000, // ₦1000 monthly
+    'pay_as_you_go_kobo' => 20000,
+    'subscription_monthly_kobo' => 100000,
+    'custom_cert_fee_kobo' => env('HANDSEAL_CUSTOM_CERT_FEE_KOBO', 100000),
 ];
+

@@ -74,12 +74,12 @@ const open = ref(false);
 const menuRef = ref(null);
 
 const links = computed(() => [
+    { label: 'Subscription & Plans', icon: 'subscription', href: route('plans.index') },
     { label: 'Certificate templates', icon: 'edit', href: route('certificate-templates.index') },
+    { label: 'Business Settings', icon: 'settings', href: route('business.edit') },
     { label: 'Referrals', icon: 'referral', href: route('referrals.index') },
     { label: 'Verify Certificate', icon: 'verify', href: route('verify.lookup') },
-    { label: 'Settings', icon: 'settings', href: route('business.edit') },
 ]);
-
 function logout() {
     open.value = false;
     router.post(route('logout'));

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Business;
+use App\Models\Plan;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -32,10 +34,10 @@ class HomeController extends Controller
         return Inertia::render('Welcome', [
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
-            'laravelVersion' => Application::VERSION,
-            'phpVersion' => PHP_VERSION,
+            'featuredBusinesses' => Business::limit(6)->get(),
+            'plans' => Plan::OrderBy('sort_order', 'ASC')->get(),
+            'paygPriceNaira' => '₦' . number_format(config('handseal.pay_as_you_go_kobo') / 100, 0),
+
         ]);
     }
-
-    // ...rest unchanged
 }

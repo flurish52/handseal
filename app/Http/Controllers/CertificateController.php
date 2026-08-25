@@ -45,29 +45,28 @@ class CertificateController extends Controller
         $business = Auth::user()->businesses()->firstOrFail();
         $student = Student::findOrFail($request->validated('student_id'));
 
-        $check = $eligibility->check($business);
+        $check = $eligibility->chargeForIssuance($business);
 
         if (! $check['allowed']) {
-            return back()->with([
-                'error' => $check['message'],
-                'paywall' => $check['reason'],
-            ]);
+            return back()->with(['error' => $check['message'], 'paywall' => $check['reason']]);
         }
 
-        $student->fill([
-            'end_at' => $student->end_at ?? now(),
-            'completed_at' => $student->completed_at ?? now(),
-        ])->save();
+        try {
+            $student->fill([
+                'end_at' => $student->end_at ?? now(),
+                'completed_at' => $student->completed_at ?? now(),
+            ])->save();
 
-        $certificate = $certificateService->issueForStudent($business, $student, $request->safe()->only([
-            'builtin_template_key',
-            'certificate_template_id',
-        ]));
+            $certificate = $certificateService->issueForStudent($business, $student, $business->resolvedTemplateSelection());
+        } catch (\Throwable $e) {
+            if ($check['charged']) {
+                $eligibility->refund($business, $check['amount_kobo'], 'certificate_issue_failed');
+            }
+            throw $e;
+        }
 
-        return back()->with([
-            'success' => 'Certificate issued.',
-            'download_url' => route('certificates.download', $certificate->id),
-        ]);
+        return back()->with(['success' => 'Certificate issued.', 'download_url'
+        => route('certificates.download', $certificate->id)]);
     }
 
     public function preview(Request $request): \Illuminate\Http\Response
@@ -76,10 +75,7 @@ class CertificateController extends Controller
         $student = Student::where('business_id', $business->id)
             ->findOrFail($request->query('student_id'));
 
-        $html = app(CertificateService::class)->renderPreview($business, $student, [
-            'builtin_template_key' => $request->query('builtin_template_key'),
-            'certificate_template_id' => $request->query('certificate_template_id'),
-        ]);
+        $html = app(CertificateService::class)->renderPreview($business, $student, $business->resolvedTemplateSelection());
 
         return response($html, 200, ['Content-Type' => 'text/html']);
     }

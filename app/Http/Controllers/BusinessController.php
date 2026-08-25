@@ -104,8 +104,10 @@ class BusinessController extends Controller
      */
     public function edit(): Response
     {
+        $business = Auth::user()->businesses()->withCount('certificates')->firstOrFail();
+
         return Inertia::render('Business/Edit', [
-            'business' => Auth::user()->businesses()->firstOrFail(),
+            'business' => $business,
             'referralCode' => Auth::user()->referredBy?->referral_code,
             'referralLocked' => (bool) Auth::user()->referred_by,
         ]);
@@ -115,7 +117,7 @@ class BusinessController extends Controller
     {
         $business = Auth::user()->businesses()->firstOrFail();
 
-        $data = $request->safe()->only(['business_name', 'address', 'is_publicly_visible']);
+        $data = $request->safe()->only(['business_name', 'address', 'is_publicly_visible', 'cert_prefix']);
 
         if ($request->hasFile('logo')) {
             // Remove the old file so replacing a logo doesn't leave orphans in storage.

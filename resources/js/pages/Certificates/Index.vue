@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
 import Icon from '@/Components/Icons/Icon.vue';
 import SearchInput from '@/Components/SearchInput.vue';
 import FilterPanel, { buildDefaultFilterValues } from '@/Components/FilterPanel.vue';
@@ -91,6 +90,8 @@ const filteredCertificates = computed(() =>
         (cert) => matchesSearch(cert, searchQuery.value) && matchesFilters(cert, filterValues.value),
     ),
 );
+
+const showIssueMenuEmpty = ref(false); // separate from the header's — they shouldn't share state
 </script>
 
 <template>
@@ -119,7 +120,7 @@ const filteredCertificates = computed(() =>
                          class="w-full bg-seal-navy text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center justify-center gap-1.5"
                      >
                          <Icon name="plus" :size="16" />
-                         Issue
+                         Issue Certificate
                      </button>
 
                      <div
@@ -165,10 +166,31 @@ const filteredCertificates = computed(() =>
                         Download
                     </a>
                 </div>
-
-                <div v-if="props.certificates.length === 0" class="text-center py-12">
+                <div v-if="props.certificates.length === 0" class="text-center flex flex-col items-center justify-center py-12">
                     <p class="text-sm text-seal-ink font-medium">No certificates issued yet</p>
                     <p class="text-xs text-seal-muted mt-1">Tap "Issue" above to create your first one.</p>
+
+                    <div class="relative w-full md:w-1/5 mt-4">
+                        <button
+                            @click="showIssueMenuEmpty = !showIssueMenuEmpty"
+                            class="w-full bg-seal-navy text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center justify-center gap-1.5"
+                        >
+                            <Icon name="plus" :size="16" />
+                            Issue Certificate
+                        </button>
+
+                        <div
+                            v-if="showIssueMenuEmpty"
+                            class="absolute left-0 right-0 mt-2 rounded-lg bg-white shadow-lg ring-1 ring-black/5 py-1 z-20"
+                        >
+                            <Link :href="route('students.index')" class="block px-3 py-2 text-sm text-seal-ink hover:bg-seal-paper">
+                                For a student
+                            </Link>
+                            <Link :href="route('certificates.guest.create')" class="block px-3 py-2 text-sm text-seal-ink hover:bg-seal-paper">
+                                For a guest
+                            </Link>
+                        </div>
+                    </div>
                 </div>
 
                 <div v-else-if="filteredCertificates.length === 0" class="text-center py-12">

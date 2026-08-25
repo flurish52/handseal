@@ -1,6 +1,6 @@
 <script setup>
 import { useForm, Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { compressImage } from '@/Composables/useImageCompression';
 
 const props = defineProps({
@@ -15,6 +15,7 @@ const form = useForm({
     logo: null,
     is_publicly_visible: props.business.is_publicly_visible,
     referral_code: props.referralCode ?? '',
+    cert_prefix: props.business.cert_prefix ?? '',
 });
 
 const logoPreview = ref(props.business.logo_url ?? null);
@@ -44,6 +45,22 @@ async function onLogoSelected(e) {
     }
 }
 
+// Only warn if they've actually issued certs AND are changing an existing
+// prefix (a first-time set on a business with zero certs needs no warning —
+// there's nothing for it to leave behind).
+const certsAlreadyIssued = computed(() => props.business.certificates_count > 0);
+const isChangingExistingPrefix = computed(
+    () => !!props.business.cert_prefix && form.cert_prefix !== props.business.cert_prefix
+);
+const showPrefixChangeWarning = computed(
+    () => certsAlreadyIssued.value && isChangingExistingPrefix.value
+);
+
+const defaultPrefixPreview = computed(() => `HS-${props.business.initials}`);
+const livePrefixPreview = computed(
+    () => `${form.cert_prefix || defaultPrefixPreview.value}${props.business.id}-000001`
+);
+
 function submit() {
     form.put(route('business.update'));
 }
@@ -51,11 +68,15 @@ function submit() {
 
 <template>
     <Head title="Business settings" />
+    <div class="p-4 space-y-6">
+        <h1 class="font-serif text-xl font-semibold text-seal-navy">Business settings</h1>
 
-        <div class="p-4 space-y-6">
-            <h1 class="font-serif text-xl font-semibold text-seal-navy">Business settings</h1>
+        <form @submit.prevent="submit" class="space-y-5">
 
-            <form @submit.prevent="submit" class="bg-white rounded-card border border-seal-line p-4 space-y-4">
+            <!-- Identity -->
+            <section class="bg-white rounded-card border border-seal-line p-4 space-y-4">
+                <h2 class="text-sm font-semibold text-seal-ink">Business identity</h2>
+
                 <div>
                     <label class="text-xs text-seal-muted">Business name</label>
                     <input
@@ -80,6 +101,7 @@ function submit() {
                         {{ form.errors.address }}
                     </p>
                 </div>
+
                 <div>
                     <label class="text-xs text-seal-muted">Business logo</label>
                     <div class="flex items-center gap-3 mt-1">
@@ -98,7 +120,47 @@ function submit() {
                     <p v-if="logoError" class="text-xs text-seal-danger mt-1">{{ logoError }}</p>
                     <p v-if="form.errors.logo" class="text-xs text-seal-danger mt-1">{{ form.errors.logo }}</p>
                 </div>
+            </section>
 
+            <!-- Certificate branding -->
+            <section class="bg-white rounded-card border border-seal-line p-4 space-y-3">
+                <h2 class="text-sm font-semibold text-seal-ink">Certificate branding</h2>
+
+                <div>
+                    <label class="text-xs text-seal-muted">Certificate prefix</label>
+                    <input
+                        v-model="form.cert_prefix"
+                        type="text"
+                        maxlength="6"
+                        placeholder="e.g. JBC (your initials)"
+                        class="w-full rounded-lg border border-seal-line px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-seal-navy"
+                        @input="form.cert_prefix = form.cert_prefix.toUpperCase()"
+                    />
+                    <p class="text-xs text-seal-muted mt-1">
+                        2–6 letters, shown on every certificate you issue. Leave blank to use the HandSeal default
+                        (<span class="font-mono">{{ defaultPrefixPreview }}</span>).
+                    </p>
+                    <p class="text-xs text-seal-muted mt-1">
+                        Preview: <span class="font-mono">{{ livePrefixPreview }}</span>
+                    </p>
+                    <p v-if="form.errors.cert_prefix" class="text-xs text-seal-danger mt-1">
+                        {{ form.errors.cert_prefix }}
+                    </p>
+
+                    <div
+                        v-if="showPrefixChangeWarning"
+                        class="mt-2 bg-seal-danger-light border border-seal-gold/30 text-seal-ink text-xs rounded-lg px-3 py-2.5"
+                    >
+                        Please note that certificates already issued with the number: {{ business.certificates_count }}
+                        can not be changed.
+                        Changing this won't affect previously issued certificates, only certificates issued from now on will use the new prefix.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Visibility -->
+            <section class="bg-white rounded-card border border-seal-line p-4">
+                <h2 class="text-sm font-semibold text-seal-ink mb-3">Visibility</h2>
                 <label class="flex items-start gap-3">
                     <input
                         v-model="form.is_publicly_visible"
@@ -112,31 +174,34 @@ function submit() {
                         </span>
                     </span>
                 </label>
+            </section>
 
-                <div>
-                    <label class="text-xs text-seal-muted">Referral code</label>
-                    <input
-                        v-model="form.referral_code"
-                        type="text"
-                        :disabled="referralLocked"
-                        placeholder="Enter a referral code (optional)"
-                        class="w-full rounded-lg border border-seal-line px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-seal-navy disabled:bg-seal-paper disabled:text-seal-muted"
-                    />
-                    <p v-if="referralLocked" class="text-xs text-seal-muted mt-1">
-                        Locked — already applied and can't be changed.
-                    </p>
-                    <p v-if="form.errors.referral_code" class="text-xs text-seal-danger mt-1">
-                        {{ form.errors.referral_code }}
-                    </p>
-                </div>
+            <!-- Referral -->
+            <section class="bg-white rounded-card border border-seal-line p-4">
+                <h2 class="text-sm font-semibold text-seal-ink mb-3">Referral</h2>
+                <label class="text-xs text-seal-muted">Referral code</label>
+                <input
+                    v-model="form.referral_code"
+                    type="text"
+                    :disabled="referralLocked"
+                    placeholder="Enter a referral code (optional)"
+                    class="w-full rounded-lg border border-seal-line px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-seal-navy disabled:bg-seal-paper disabled:text-seal-muted"
+                />
+                <p v-if="referralLocked" class="text-xs text-seal-muted mt-1">
+                    Locked — already applied and can't be changed.
+                </p>
+                <p v-if="form.errors.referral_code" class="text-xs text-seal-danger mt-1">
+                    {{ form.errors.referral_code }}
+                </p>
+            </section>
 
-                <button
-                    type="submit"
-                    :disabled="form.processing"
-                    class="bg-seal-navy text-white text-sm font-medium px-4 py-2 rounded-lg disabled:opacity-50"
-                >
-                    Save changes
-                </button>
-            </form>
-        </div>
+            <button
+                type="submit"
+                :disabled="form.processing"
+                class="bg-seal-navy text-white text-sm font-medium px-4 py-2 rounded-lg disabled:opacity-50"
+            >
+                Save changes
+            </button>
+        </form>
+    </div>
 </template>

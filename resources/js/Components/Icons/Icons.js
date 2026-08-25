@@ -78,5 +78,38 @@ export default {
         { tag: 'path', attrs: { d: 'M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3Z' } },
         { tag: 'path', attrs: { d: 'M8.5 12.5l2.5 2.5 4.5-5' } },
     ],
-
+    subscription: [
+        {
+            tag: 'rect',
+            attrs: {
+                x: '3',
+                y: '5',
+                width: '18',
+                height: '14',
+                rx: '2',
+            },
+        },
+        {
+            tag: 'path',
+            attrs: {
+                d: 'M3 10h18',
+            },
+        },
+        {
+            tag: 'path',
+            attrs: {
+                d: 'M7 15h3',
+            },
+        },
+    ],
+    info: [
+        { tag: 'circle', attrs: { cx: '12', cy: '12', r: '9' } },
+        { tag: 'path', attrs: { d: 'M12 11v5' } },
+        { tag: 'path', attrs: { d: 'M12 8h.01' } },
+    ],
+    wallet: [
+        { tag: 'path', attrs: { d: 'M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4' } },
+        { tag: 'path', attrs: { d: 'M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4' } },
+        { tag: 'path', attrs: { d: 'M18 12a2 2 0 0 0 0 4h4v-4z' } },
+    ],
 };

@@ -19,16 +19,23 @@ class Business extends Model
         'trade_category',
         'is_publicly_visible',
         'subscription_active_until',
-        'logo_path'
+        'logo_path',
+        'cert_prefix',
+        'ai_rejection_count',
+        'ai_attempts_remaining',
+        'default_builtin_template_key',
     ];
 
     protected $casts = [
         'is_publicly_visible' => 'boolean',
         'subscription_active_until' => 'datetime',
         'owner_id' => 'integer',
+        'ai_attempts_remaining' => 'integer',
+        'ai_rejection_count' => 'integer',
     ];
 
-    protected $appends = ['logo_url']; // merge with any existing $appends
+    protected $appends = ['logo_url', 'initials'];
+
 
     protected function logoUrl(): Attribute
     {
@@ -91,25 +98,93 @@ class Business extends Model
         return implode('', array_filter($letters));
     }
 
-    public function hasPaidOnboarding(): bool
+    /**
+     * Full prefix used in certificate_number. Custom prefix replaces the
+     * "HS-{initials}" default entirely once set.
+     */
+    public function certPrefix(): string
     {
-        return $this->payments()
-            ->where('type', 'onboarding')
-            ->where('status', 'successful')
-            ->exists();
+        return $this->cert_prefix ?: 'HS-' . $this->initials();
     }
 
-    public function onboardingPayment(): ?\App\Models\Payment
-    {
-        return $this->payments()->where('type', 'onboarding')
-            ->where('status', 'successful')
-            ->first();
-    }
 
     public function hasActiveSubscription(): bool
     {
         return $this->subscription_active_until && $this->subscription_active_until->isFuture();
     }
 
+    public function wallet(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Wallet::class);
+    }
+    public function subscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function activeSubscription(): ?Subscription
+    {
+        return $this->subscriptions()
+            ->with('plan')
+            ->where('status', 'active')
+            ->where('current_period_ends_at', '>', now())
+            ->latest('current_period_ends_at')
+            ->first();
+    }
+
+    public function hasActiveCustomTemplate(): bool
+    {
+        return $this->certificateTemplates()->where('status', 'active')->exists();
+    }
+
+    public function canGenerateAiForFree(): bool
+    {
+        return ! $this->hasActiveCustomTemplate() && $this->ai_attempts_remaining > 0;
+    }
+
+
+    public function unusedTemplateRequestVoucher(): ?\App\Models\Payment
+    {
+        return $this->payments()
+            ->where('type', 'template_fee')
+            ->where('status', 'successful')
+            ->whereNull('used_at')
+            ->get()
+            ->first(fn ($payment) => ($payment->metadata['purpose'] ?? null) === 'team_request');
+    }
+
+    public function canRequestFromAdmins(): bool
+    {
+        return (bool) $this->unusedTemplateRequestVoucher();
+    }
+
+    public function setCertPrefixAttribute($value): void
+    {
+        $this->attributes['cert_prefix'] = $value ? strtoupper($value) : null;
+    }
+    public function getInitialsAttribute(): string
+    {
+        return $this->initials(); // or inline the same logic if initials() itself doesn't exist as a separate method
+    }
+
+    /**
+     * Single source of truth for "what template does this business's cert
+     * use right now" — active custom template wins, else their chosen
+     * builtin, else a hard fallback. Nothing outside this method should
+     * ever read builtin_template_key/certificate_template_id off a request.
+     */
+    public function resolvedTemplateSelection(): array
+    {
+        $active = $this->certificateTemplates()->where('status', 'active')->first();
+
+        if ($active) {
+            return ['builtin_template_key' => null, 'certificate_template_id' => $active->id];
+        }
+
+        return [
+            'builtin_template_key' => $this->default_builtin_template_key ?: 'classic-navy',
+            'certificate_template_id' => null,
+        ];
+    }
 
 }

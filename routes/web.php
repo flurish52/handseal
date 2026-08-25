@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BusinessController;
+use App\Http\Controllers\BusinessTemplateController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CertificateTemplateController;
 use App\Http\Controllers\CertificateTemplateRequestController;
@@ -10,6 +12,7 @@ use App\Http\Controllers\DirectoryController;
 use App\Http\Controllers\GuestCertificateController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProgrammeController;
 use App\Http\Controllers\ReferralController;
@@ -44,6 +47,10 @@ Route::get('/onboarding', [BusinessController::class, 'create'])->name('business
 
 Route::get('/certificates/preview', [CertificateController::class, 'preview'])->name('certificates.preview');
 Route::get('/certificates/guest/preview', [CertificateController::class, 'previewGuest'])->name('certificates.guest.preview');
+Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+
+
+
 
 
 Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureBusinessExists::class])->group(function () {
@@ -91,8 +98,13 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureBusinessExists
     Route::get('/payments/callback', [PaymentController::class, 'callback'])->name('payments.callback');
 
     Route::post('/payments/certificate', [PaymentController::class, 'payCertificateFee'])->name('payments.certificate');
-    Route::post('/payments/subscribe', [PaymentController::class, 'paySubscription'])->name('payments.subscribe');
 
+    Route::post('/payments/subscribe/{plan:slug}', [PaymentController::class, 'paySubscription'])->name('payments.subscribe');
+    Route::post('/payments/fund-wallet', [PaymentController::class, 'payFundWallet'])
+        ->name('payments.fund-wallet');
+
+    Route::post('/payments/from-wallet', [PaymentController::class, 'payCertificateFeeFromWalletBalance'])
+        ->name('payments.certificate.wallet');
 
 // Business-facing
     Route::get('/certificate-templates', [CertificateTemplateController::class, 'index'])
@@ -107,6 +119,23 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureBusinessExists
     Route::delete('/certificate-template-requests/{certificateTemplateRequest}', [CertificateTemplateRequestController::class, 'destroy'])
         ->name('certificate-template-requests.destroy');
 
+    Route::post('/certificate-templates/generate', [CertificateTemplateController::class, 'generate'])
+        ->name('certificate-templates.generate');
+    Route::post('/certificate-templates/{certificateTemplate}/reject', [CertificateTemplateController::class, 'reject'])
+        ->name('certificate-templates.reject');
+
+    Route::post('/pay/custom-cert-fee', [PaymentController::class, 'payCustomCertFee'])
+        ->name('payments.custom-cert-fee');
+//    Route::post('/pay/template-request-fee', [PaymentController::class, 'payTemplateRequestFee'])
+//        ->name('payments.template-request-fee');
+
+    Route::post('/pay/template-request-fee', [PaymentController::class, 'payTemplateRequestFee'])
+        ->name('payments.template-request-fee');
+
+        Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+
+    Route::post('/certificate-templates/default-builtin', [CertificateTemplateController::class, 'setDefaultBuiltin'])
+        ->name('certificate-templates.default-builtin');
 });
 
 Route::middleware('auth')->group(function () {

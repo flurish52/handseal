@@ -26,25 +26,6 @@ class StoreGuestCertificateRequest extends FormRequest
             ],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],
-            'builtin_template_key' => ['nullable', 'string'],
-            'certificate_template_id' => [
-                'nullable',
-                Rule::exists('certificate_templates', 'id')
-                    ->where('business_id', $businessId)
-                    ->where('status', 'active'),
-            ],
         ];
-    }
-
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator) {
-            $hasBuiltin = (bool) $this->input('builtin_template_key');
-            $hasCustom = (bool) $this->input('certificate_template_id');
-
-            if ($hasBuiltin === $hasCustom) {
-                $validator->errors()->add('template', 'Choose exactly one template — built-in or custom.');
-            }
-        });
     }
 }

@@ -45,14 +45,13 @@ class Certificate extends Model
                 return;
             }
 
-            $prefix = config('handseal.cert_prefix');
-            $initials = $certificate->business->initials();
+            $certPrefix = $certificate->business->certPrefix(); // "JBC" or "HS-PFT" fallback
             $businessId = $certificate->business_id;
             $certId = str_pad((string) $certificate->id, config('handseal.cert_id_pad_length'), '0', STR_PAD_LEFT);
 
-            $certificate->certificate_number = "{$prefix}-{$initials}{$businessId}-{$certId}";
+            $certificate->certificate_number = "{$certPrefix}{$businessId}-{$certId}";
             $certificate->saveQuietly();
-        });
+        });;
     }
 
     public function business(): BelongsTo

@@ -57,6 +57,10 @@ createInertiaApp({
                     return AppLayout
                 case name.startsWith('Students/'):
                     return AppLayout
+                case name.startsWith('Billing/'):
+                    return AppLayout
+                case name.startsWith('Plans/'):
+                    return GuestLayout
                 default:
                     return null
             }

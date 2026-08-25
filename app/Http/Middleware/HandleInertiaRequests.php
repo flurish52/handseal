@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Certificate;
+use App\Models\Plan;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -35,15 +37,25 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $request->user(),
+                'billing' => function () use ($request) {
+                    $user = $request->user();
+                    if (! $user) return null;
+
+                    $business = $user->businesses()->first();
+                    if (! $business) return null;
+
+                    return app(\App\Services\BillingSummaryService::class)->for($business);
+                },
             ],
             'flash' => [
-                'success' => fn () => $request->session()->get('success'),
-                'error' => fn () => $request->session()->get('error'),
-                'download_url' => fn () => $request->session()->get('download_url'),
-                'paywall' => fn () => $request->session()->get('paywall'),
+                'success' => fn() => $request->session()->get('success'),
+                'error' => fn() => $request->session()->get('error'),
+                'download_url' => fn() => $request->session()->get('download_url'),
+                'paywall' => fn() => $request->session()->get('paywall'),
             ],
             'canLogin' => Route::has('login'),
             'canRegister' => Route::has('register'),
+
         ];
     }
 }

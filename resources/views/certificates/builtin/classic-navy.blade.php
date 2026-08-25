@@ -70,15 +70,15 @@
 <div class="frame">
     <div class="inner">
         <div class="eyebrow">Certificate of Completion</div>
-        <div class="business">{{ $certificate->business->business_name }}</div>
+        <div class="business">{{ $certificate->business?->business_name ?? 'HandSeal' }}</div>
 
         <div class="certifies">This certifies that</div>
-        <div class="recipient">{{ $certificate->recipient_name }}</div>
+        <div class="recipient">{{ $certificate->recipient_name ?? '—' }}</div>
 
         <div class="desc">
             has successfully completed the<br>
-            <b>{{ $certificate->programme->name }}</b> programme<br>
-            {{ $certificate->start_date->format('d M Y') }} &mdash; {{ $certificate->end_date->format('d M Y') }}
+            <b>{{ $certificate->programme?->name ?? 'programme' }}</b><br>
+            {{ $certificate->start_date?->format('d M Y') ?? '—' }} &mdash; {{ $certificate->end_date?->format('d M Y') ?? '—' }}
         </div>
 
         <table class="footer-table">
@@ -89,7 +89,7 @@
                     @endif
                 </td>
                 <td class="certno-cell">
-                    {{ $certificate->certificate_number }}<br>
+                    {{ $certificate->certificate_number ?? '—' }}<br>
                     verify at {{ config('app.url') }}/{{ config('handseal.verify_path') }}
                 </td>
             </tr>

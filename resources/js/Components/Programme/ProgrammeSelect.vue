@@ -37,8 +37,8 @@ function onCreated(programme) {
         <select :value="modelValue" @change="onChange"
                 class="w-full rounded-lg border border-seal-line px-3 py-2 text-sm text-seal-ink focus:outline-none focus:ring-2 focus:ring-seal-navy/40 focus:border-seal-navy">
             <option value="" disabled>Select a programme</option>
-            <option :value="NEW_PROGRAMME_VALUE">+ Add new programme…</option>
             <option v-for="p in localProgrammes" :key="p.id" :value="p.id">{{ p.name }}</option>
+            <option :value="NEW_PROGRAMME_VALUE">+ Add new programme…</option>
         </select>
         <p v-if="error" class="text-xs text-seal-danger mt-1">{{ error }}</p>
 

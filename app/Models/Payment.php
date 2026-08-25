@@ -20,6 +20,7 @@ class Payment extends Model
         'metadata',
         'return_to',
         'certificate_id',
+        'used_at',
     ];
 
     protected function casts(): array

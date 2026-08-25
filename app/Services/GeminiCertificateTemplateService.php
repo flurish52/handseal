@@ -41,9 +41,8 @@ class GeminiCertificateTemplateService
             'Content-Type' => 'application/json',
         ])->post(
             sprintf(
-                'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s',
-                config('services.gemini.model'),
-                config('services.gemini.key')
+                'https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent',
+                config('services.gemini.model')
             ),
             [
                 'contents' => [
@@ -146,10 +145,11 @@ class GeminiCertificateTemplateService
         - Use table-based or absolute-positioned layout only.
         - A4 landscape page size via @page { size: A4 landscape; margin: 0; }.
         - Include these Blade placeholders exactly as written, do not rename them:
-          {{ \$certificate->business->business_name }}, {{ \$certificate->recipient_name }},
-          {{ \$certificate->programme->name }}, {{ \$certificate->start_date->format('d M Y') }},
+          {{ \$certificate?->business?->business_name }}, {{ \$certificate?->recipient_name }},
+          {{ \$certificate?->programme?->name }}, {{ \$certificate->start_date->format('d M Y') }},
           {{ \$certificate->end_date->format('d M Y') }}, {{ \$certificate->certificate_number }},
-          and an <img> tag with src="{{ \$certificate->qrBase64() }}".
+          and an <img> tag with src="{{ \$certificate?->qrBase64() }}
+          Guard every variable/field properly with ? or ?? to prevent errors".
 
         {$imageInstructions}
 

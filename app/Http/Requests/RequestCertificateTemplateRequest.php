@@ -15,7 +15,10 @@ class RequestCertificateTemplateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'description' => ['required', 'string', 'max:1000'], // what they want it to look like
+            'description' => ['required', 'string', 'max:1000'],
+            'sample_type' => ['nullable', 'in:template,hardcopy'],
+            'images' => ['nullable', 'array', 'max:3'],
+            'images.*' => ['image', 'mimes:jpeg,png,webp', 'max:5120'],
         ];
     }
 }

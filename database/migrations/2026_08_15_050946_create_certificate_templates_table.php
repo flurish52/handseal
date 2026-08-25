@@ -19,8 +19,10 @@ return new class extends Migration
 
             $table->string('name');
             $table->longText('content'); // Blade/HTML markup generated once by Gemini, then reused with zero AI calls
-            $table->enum('status', ['draft', 'active'])->default('draft'); // must be reviewed before going live
-
+            $table->enum('status',['draft','active','rejected','inactive'])->default('draft'); // must be reviewed before going live
+            $table->string('source')->default('ai'); // 'ai' | 'admin'
+            $table->foreignId('certificate_template_request_id')->nullable()
+                ->constrained()->nullOnDelete();
             $table->timestamps();
 
             $table->index('business_id');

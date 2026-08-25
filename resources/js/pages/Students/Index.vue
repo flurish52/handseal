@@ -1,7 +1,6 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { router, Head } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import {ref, computed, watch} from 'vue';
+import {router, Head, usePage} from '@inertiajs/vue3';
 import StudentFormModal from '@/Components/StudentFormModal/StudentFormModal.vue';
 import IssueCertificateModal from "@/Components/StudentFormModal/IssueCertificateModal.vue";
 import SearchInput from '@/Components/SearchInput.vue';
@@ -169,6 +168,17 @@ const filteredStudents = computed(() =>
     props.students.filter(
         (student) => matchesSearch(student, searchQuery.value) && matchesFilters(student, filterValues.value),
     ),
+);
+
+watch(
+    () => usePage().props.flash?.download_url,
+    (url) => {
+        if (url) {
+            window.location.href = url;
+            issuingFor.value = null; // close the modal now that the cert is issued
+        }
+    },
+    { immediate: true }
 );
 </script>
 
@@ -364,14 +374,12 @@ const filteredStudents = computed(() =>
         </div>
 
 
-        <IssueCertificateModal
-            v-if="issuingFor"
-            :student="issuingFor"
-            :builtins="builtins"
-            :customTemplates="customTemplates"
-            @close="issuingFor = null"
-            @issued="onIssued"
-        />
+    <IssueCertificateModal
+        v-if="issuingFor"
+        :student="issuingFor"
+        @close="issuingFor = null"
+        @issued="onIssued"
+    />
         <StudentFormModal
             :open="modalOpen"
             :student="editingStudent"

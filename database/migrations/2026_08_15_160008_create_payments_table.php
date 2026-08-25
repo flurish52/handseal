@@ -15,11 +15,12 @@ return new class extends Migration
                 ->constrained('businesses')
                 ->cascadeOnDelete();
 
-            $table->enum('type', ['onboarding', 'certificate', 'subscription']);
+            $table->enum('type', ['certificate', 'subscription', 'funding', 'template_fee']);
             $table->unsignedInteger('amount_kobo');
-            $table->string('paystack_reference')->unique();
+            $table->string('paystack_reference')->nullable()->unique();
             $table->enum('status', ['pending', 'successful', 'failed'])->default('pending');
             $table->timestamp('paid_at')->nullable();
+            $table->timestamp('used_at')->nullable();
             $table->json('metadata')->nullable();
             $table->string('return_to')->nullable();
             $table->foreignId('certificate_id')->nullable()

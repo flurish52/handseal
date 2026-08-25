@@ -3,7 +3,10 @@
         <!-- Top bar -->
         <header class="sticky top-0 z-10 bg-seal-navy text-white px-4 py-3 flex items-center justify-between">
             <span class="font-serif text-base font-semibold">HandSeal</span>
-            <UserMenu />
+            <div class="flex items-center gap-2">
+                <HeaderBillingStatus />
+                <UserMenu />
+            </div>
         </header>
 
         <!-- Flash message -->
@@ -58,6 +61,7 @@ import { watch } from 'vue';
 import Icon from '@/Components/Icons/Icon.vue';
 import UserMenu from "@/Components/UserMenu.vue";
 import InstallPWAButton from "@/Components/InstallPWAButton.vue";
+import HeaderBillingStatus from "@/Components/HeaderBillingStatus.vue";
 
 const page = usePage();
 
@@ -67,8 +71,8 @@ const flashError = computed(() => page.props.flash?.error ?? null);
 const navItems = computed(() => [
     { label: 'Home', icon: 'home', href: route('dashboard'), active: route().current('dashboard') },
     { label: 'Students', icon: 'users', href: route('students.index'), active: route().current('students.*') },
+    { label: 'Certification', icon: 'award', href: route('certificates.index'), active: route().current('certificates.*') },
     { label: 'Programmes', icon: 'bookOpen', href: route('programmes.index'), active: route().current('programmes.*') },
-    { label: 'Certs', icon: 'award', href: route('certificates.index'), active: route().current('certificates.*') },
 ]);
 
 
