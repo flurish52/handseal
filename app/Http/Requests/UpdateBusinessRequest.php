@@ -32,20 +32,20 @@ class UpdateBusinessRequest extends FormRequest
                 'nullable',
                 'string',
                 'min:2',
-                'max:16',
-                'regex:/^[a-zA-Z0-9-]+$/',
+                'max:12',
+                'regex:/^[a-zA-Z0-9\-\/]+$/',
                 Rule::unique('businesses', 'cert_prefix')
                     ->ignore($this->user()->businesses()->first()?->id),
             ],
             'logo' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:5120'],
         ];
+
+    }
+    public function messages(): array
+    {
+        return [
+            'cert_prefix.regex' => 'Prefix can only contain letters, numbers, hyphens, and slashes.',
+        ];
     }
 
-
-public function messages(): array
-{
-    return [
-        'cert_prefix.regex' => 'Prefix can only contain letters, numbers, and hyphens — no slashes or other symbols.',
-    ];
-}
 }

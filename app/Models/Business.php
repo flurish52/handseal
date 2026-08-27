@@ -139,7 +139,7 @@ class Business extends Model
 
     public function canGenerateAiForFree(): bool
     {
-        return ! $this->hasActiveCustomTemplate() && $this->ai_attempts_remaining > 0;
+        return $this->ai_attempts_remaining > 0;
     }
 
 

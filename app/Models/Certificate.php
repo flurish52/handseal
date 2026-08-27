@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class Certificate extends Model
 {
@@ -23,6 +24,7 @@ class Certificate extends Model
         'is_guest',
         'qr_path',
         'issued_at',
+        'public_verification_number',
     ];
 
     protected $casts = [
@@ -49,17 +51,35 @@ class Certificate extends Model
         });
 
         static::created(function (Certificate $certificate) {
-            if ($certificate->certificate_number) {
-                return;
+            $dirty = false;
+
+            if (! $certificate->certificate_number) {
+                $certPrefix = $certificate->business->certPrefix();
+                $businessSeq = str_pad((string) $certificate->business->sequence_number, config('handseal.cert_id_pad_length'), '0', STR_PAD_LEFT);
+                $localNum = str_pad((string) $certificate->local_number, config('handseal.cert_id_pad_length'), '0', STR_PAD_LEFT);
+
+                $certificate->certificate_number = "{$certPrefix}-{$businessSeq}-{$localNum}";
+                $dirty = true;
             }
 
-            $certPrefix = $certificate->business->certPrefix();
-            $businessSeq = str_pad((string) $certificate->business->sequence_number, config('handseal.cert_id_pad_length'), '0', STR_PAD_LEFT);
-            $localNum = str_pad((string) $certificate->local_number, config('handseal.cert_id_pad_length'), '0', STR_PAD_LEFT);
+            if (! $certificate->public_verification_number) {
+                $certificate->public_verification_number = static::generateUniquePublicNumber();
+                $dirty = true;
+            }
 
-            $certificate->certificate_number = "{$certPrefix}-{$businessSeq}-{$localNum}";
-            $certificate->saveQuietly();
+            if ($dirty) {
+                $certificate->saveQuietly();
+            }
         });
+    }
+
+    protected static function generateUniquePublicNumber(): string
+    {
+        do {
+            $code = strtolower(Str::random(16));
+        } while (static::where('public_verification_number', $code)->exists());
+
+        return $code;
     }
 
     public function business(): BelongsTo

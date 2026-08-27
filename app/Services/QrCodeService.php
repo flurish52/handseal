@@ -17,9 +17,11 @@ class QrCodeService
      */
     public function generateForCertificate(Certificate $certificate): string
     {
+        $slug = $certificate->public_verification_number ?? $certificate->certificate_number;
+
         $url = rtrim(config('app.url'), '/')
             . '/' . config('handseal.verify_path')
-            . '/' . $certificate->certificate_number;
+            . '/' . $slug;
 
         $writer = new \Endroid\QrCode\Writer\PngWriter();
 
@@ -34,7 +36,7 @@ class QrCodeService
 
         $result = $writer->write($qrCode);
 
-        $path = config('handseal.qr_path') . '/' . $certificate->certificate_number . '.png';
+        $path = config('handseal.qr_path') . '/' . $slug . '.png';
 
         Storage::disk(config('handseal.qr_disk'))->put($path, $result->getString());
 

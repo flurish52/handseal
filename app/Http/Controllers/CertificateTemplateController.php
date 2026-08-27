@@ -125,7 +125,7 @@ class CertificateTemplateController extends Controller
             'source' => 'ai',
         ]);
 
-        return back()->with('success', 'Draft ready — review it below.');
+        return back()->with('success', 'Draft ready, review it below.');
     }
 
     public function reject(CertificateTemplate $certificateTemplate): RedirectResponse

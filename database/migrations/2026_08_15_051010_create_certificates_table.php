@@ -37,6 +37,7 @@ return new class extends Migration
             // Nullable at the DB level only because it's filled in the split second after the row
             // is inserted (need the id first) — application code should never leave it null after that.
             $table->string('certificate_number')->nullable()->unique();
+            $table->string('public_verification_number', 32)->nullable()->unique();
 
             // Denormalized on purpose: a guest recipient has no student row to pull a name from,
             // and even for tracked students, a certificate should keep saying the name as it was

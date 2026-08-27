@@ -25,7 +25,9 @@ use Inertia\Inertia;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 Route::get('/verify', [VerificationController::class, 'lookup'])->name('verify.lookup');
-Route::get('/verify/{certificateNumber}', [VerificationController::class, 'show'])->name('verify.show');
+Route::post('/verify', [VerificationController::class, 'search'])->name('verify.search');
+Route::get('/verify/{code}', [VerificationController::class, 'show'])->name('verify.show');
+
 Route::get('/directory', [DirectoryController::class, 'index'])->name('directory.index');
 Route::post('/payments/webhook', [PaymentController::class, 'webhook'])->name('payments.webhook');
 

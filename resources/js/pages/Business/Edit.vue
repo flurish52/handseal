@@ -132,13 +132,13 @@ function submit() {
                     <input
                         v-model="form.cert_prefix"
                         type="text"
-                        maxlength="12"
+                        maxlength="16"
                         placeholder="e.g. JBC (your initials)"
                         class="w-full rounded-lg border border-seal-line px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-seal-navy"
-                        @input="form.cert_prefix = form.cert_prefix.toUpperCase().replace(/[^A-Z0-9-]/g, '')"
+                        @input="form.cert_prefix = form.cert_prefix.toUpperCase().replace(/[^A-Z0-9\-\/]/g, '')"
                     />
                     <p class="text-xs text-seal-muted mt-1">
-                        2–12 characters — letters, numbers, and hyphens only. Shown on every certificate you issue. Leave blank to use the HandSeal default
+                        2–16 characters — letters, numbers, hyphens, and slashes only. Shown on every certificate you issue. Leave blank to use the HandSeal default
                         (<span class="font-mono">{{ defaultPrefixPreview }}</span>).
                     </p>
                     <p class="text-xs text-seal-muted mt-1">
@@ -152,7 +152,7 @@ function submit() {
                         v-if="showPrefixChangeWarning"
                         class="mt-2 bg-seal-danger-light border border-seal-gold/30 text-seal-ink text-xs rounded-lg px-3 py-2.5"
                     >
-                        Please note that certificates already issued with the number: {{ business.certificates_count }}
+                        Please note that,  {{ business.certificates_count }} certificates already issued with the number
                         can not be changed.
                         Changing this won't affect previously issued certificates, only certificates issued from now on will use the new prefix.
                     </div>

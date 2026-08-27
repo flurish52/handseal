@@ -32,8 +32,6 @@ function selectBuiltin(key) {
     router.post(route('certificate-templates.default-builtin'), {builtin_template_key: key}, {preserveScroll: true});
 }
 
-// Defensive fallbacks in case a prop ever arrives as null/undefined
-// despite the defaults above.
 const templates = computed(() => props.templates ?? []);
 const requests = computed(() => props.requests ?? []);
 const builtins = computed(() => props.builtins ?? []);
@@ -57,7 +55,7 @@ function onAiTabClick() {
     activeMode.value = 'ai';
 }
 
-const activePreview = ref(null); // { title, url }
+const activePreview = ref(null);
 
 function openPreview(title, url) {
     if (!url) return;
@@ -86,6 +84,8 @@ const activeTemplate = computed(() => {
 
     <div class="p-4 space-y-6">
         <h1 class="font-serif text-xl font-semibold text-seal-navy">Certificate templates</h1>
+
+        <!-- 1. Orientation: what's live right now -->
         <div v-if="activeTemplate" class="bg-white rounded-card border-2 border-seal-navy p-4 flex items-center gap-4">
             <div class="relative w-24 h-16 shrink-0 bg-seal-line/20 rounded overflow-hidden">
                 <iframe v-if="activeTemplate.preview_url" :src="activeTemplate.preview_url"
@@ -98,16 +98,17 @@ const activeTemplate = computed(() => {
                 <p class="text-[11px] text-seal-muted">{{ activeTemplate.kind }} — used on every certificate you issue</p>
             </div>
         </div>
-
-
-        <BuiltinPresets
-            :builtins="builtins"
-            :active-key="defaultBuiltinKey"
+        <TemplateGrid
+            :templates="templates"
             @preview="openPreview"
-            @select="selectBuiltin"/>
 
+        />
+
+        <!-- 2. Status: anything they're already waiting on -->
+        <RequestsInProgress :requests="requests"/>
+
+        <!-- 3. Primary action: create/generate -->
         <div class="space-y-3">
-            <QuotaBanner :quota="quota" @go-to-team="goToTeamMode"/>
 
             <div class="flex gap-2">
                 <button
@@ -131,9 +132,12 @@ const activeTemplate = computed(() => {
             <GenerateForm :mode="activeMode" :key="activeMode" :quota="quota"/>
         </div>
 
-        <RequestsInProgress :requests="requests"/>
-
-        <TemplateGrid :templates="templates" @preview="openPreview"/>
+        <!-- 4. Secondary/fallback option -->
+        <BuiltinPresets
+            :builtins="builtins"
+            :active-key="defaultBuiltinKey"
+            @preview="openPreview"
+            @select="selectBuiltin"/>
     </div>
 
     <PreviewModal :preview="activePreview" @close="closePreview"/>

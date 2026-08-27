@@ -11,7 +11,7 @@ return [
     */
     'cert_prefix' => 'HS',
     'cert_id_pad_length' => 6,       // zero-pad CERT_ID to this many digits
-    'cert_initials_max_words' => 3,  // max words of business_name used for initials
+    'cert_initials_max_words' => 16,  // max words of business_name used for initials
 
     /*
     |--------------------------------------------------------------------------
