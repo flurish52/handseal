@@ -47,7 +47,7 @@ class CertificateController extends Controller
 
         $check = $eligibility->chargeForIssuance($business);
 
-        if (! $check['allowed']) {
+        if (!$check['allowed']) {
             return back()->with(['error' => $check['message'], 'paywall' => $check['reason']]);
         }
 
@@ -103,7 +103,11 @@ class CertificateController extends Controller
             403
         );
 
+        $safeName = str_replace(['/', '\\'], '-', $certificate->recipient_name);
+        $safeNumber = str_replace(['/', '\\'], '-', $certificate->certificate_number);
+
         return $certificateService->renderPdf($certificate)
-            ->download("{$certificate->recipient_name}-{$certificate->certificate_number}.pdf");
+            ->download("{$safeName}-{$safeNumber}.pdf");
     }
+
 }
