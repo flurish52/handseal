@@ -84,13 +84,26 @@ class CertificateController extends Controller
     {
         $business = Auth::user()->businesses()->firstOrFail();
 
+        $builtinKey = $request->query('builtin_template_key');
+        $customTemplateId = $request->query('certificate_template_id');
+
+        // Mirror preview()'s guarantee: if the form hasn't explicitly picked a
+        // template yet, fall back to whatever this business would actually use
+        // if a certificate were issued right now — never let buildHtml() silently
+        // fall through to the hardcoded 'portrait-formal' default instead.
+        if (! $builtinKey && ! $customTemplateId) {
+            $resolved = $business->resolvedTemplateSelection();
+            $builtinKey = $resolved['builtin_template_key'] ?? null;
+            $customTemplateId = $resolved['certificate_template_id'] ?? null;
+        }
+
         $html = app(CertificateService::class)->renderGuestPreview($business, [
             'recipient_name' => $request->query('recipient_name'),
             'programme_id' => $request->query('programme_id'),
             'start_date' => $request->query('start_date'),
             'end_date' => $request->query('end_date'),
-            'builtin_template_key' => $request->query('builtin_template_key'),
-            'certificate_template_id' => $request->query('certificate_template_id'),
+            'builtin_template_key' => $builtinKey,
+            'certificate_template_id' => $customTemplateId,
         ]);
 
         return response($html, 200, ['Content-Type' => 'text/html']);
