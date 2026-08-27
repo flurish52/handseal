@@ -15,12 +15,13 @@ return new class extends Migration
                 ->constrained('users')
                 ->cascadeOnDelete();
 
+            $table->unsignedInteger('sequence_number')->unique()->nullable();
             $table->string('business_name');
             $table->string('trade_category')->nullable();
             $table->string('address')->nullable();
             $table->boolean('is_publicly_visible')->default(true);
             $table->string('logo_path')->nullable();
-            $table->string('cert_prefix', 6)->nullable()->unique();
+            $table->string('cert_prefix', 16)->nullable()->unique();
             $table->unsignedTinyInteger('ai_rejection_count')
                 ->default(0);
             $table->unsignedTinyInteger('ai_attempts_remaining')

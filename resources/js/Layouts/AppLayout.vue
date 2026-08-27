@@ -28,6 +28,9 @@
             <slot />
         </main>
 
+        <ToastContainer />
+        <ConfirmModal />
+
         <!-- Bottom nav -->
         <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-seal-line px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
             <div class="grid grid-cols-4">
@@ -62,7 +65,11 @@ import Icon from '@/Components/Icons/Icon.vue';
 import UserMenu from "@/Components/UserMenu.vue";
 import InstallPWAButton from "@/Components/InstallPWAButton.vue";
 import HeaderBillingStatus from "@/Components/HeaderBillingStatus.vue";
+import { useToast } from '@/composables/useToast';
+import ToastContainer from '@/Components/PopUps/ToastContainer.vue';
+import ConfirmModal from '@/Components/PopUps/ConfirmModal.vue';
 
+const toast = useToast();
 const page = usePage();
 
 const flashSuccess = computed(() => page.props.flash?.success ?? null);
@@ -76,6 +83,16 @@ const navItems = computed(() => [
 ]);
 
 
+
+watch(
+    () => page.props.flash,
+    (flash) => {
+        if (flash?.success) toast.success(flash.success);
+        if (flash?.error) toast.danger(flash.error);
+        if (flash?.warning) toast.warning(flash.warning);
+    },
+    { deep: true }
+);
 
 watch(
     () => page.props.flash?.download_url,

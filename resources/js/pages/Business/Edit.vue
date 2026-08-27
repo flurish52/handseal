@@ -45,9 +45,6 @@ async function onLogoSelected(e) {
     }
 }
 
-// Only warn if they've actually issued certs AND are changing an existing
-// prefix (a first-time set on a business with zero certs needs no warning —
-// there's nothing for it to leave behind).
 const certsAlreadyIssued = computed(() => props.business.certificates_count > 0);
 const isChangingExistingPrefix = computed(
     () => !!props.business.cert_prefix && form.cert_prefix !== props.business.cert_prefix
@@ -57,8 +54,12 @@ const showPrefixChangeWarning = computed(
 );
 
 const defaultPrefixPreview = computed(() => `HS-${props.business.initials}`);
+
+// Matches backend: {PREFIX}-{sequence_number}-{local_number}, both zero-padded to 6.
+const padded = (n) => String(n ?? 0).padStart(6, '0');
+
 const livePrefixPreview = computed(
-    () => `${form.cert_prefix || defaultPrefixPreview.value}${props.business.id}-000001`
+    () => `${form.cert_prefix || defaultPrefixPreview.value}-${padded(props.business.sequence_number)}-${padded(props.business.certificates_count + 1)}`
 );
 
 function submit() {
@@ -131,13 +132,13 @@ function submit() {
                     <input
                         v-model="form.cert_prefix"
                         type="text"
-                        maxlength="6"
+                        maxlength="12"
                         placeholder="e.g. JBC (your initials)"
                         class="w-full rounded-lg border border-seal-line px-3 py-2 text-sm font-mono uppercase focus:outline-none focus:ring-2 focus:ring-seal-navy"
-                        @input="form.cert_prefix = form.cert_prefix.toUpperCase()"
+                        @input="form.cert_prefix = form.cert_prefix.toUpperCase().replace(/[^A-Z0-9-]/g, '')"
                     />
                     <p class="text-xs text-seal-muted mt-1">
-                        2–6 letters, shown on every certificate you issue. Leave blank to use the HandSeal default
+                        2–12 characters — letters, numbers, and hyphens only. Shown on every certificate you issue. Leave blank to use the HandSeal default
                         (<span class="font-mono">{{ defaultPrefixPreview }}</span>).
                     </p>
                     <p class="text-xs text-seal-muted mt-1">
@@ -179,12 +180,12 @@ function submit() {
             <!-- Referral -->
             <section class="bg-white rounded-card border border-seal-line p-4">
                 <h2 class="text-sm font-semibold text-seal-ink mb-3">Referral</h2>
-                <label class="text-xs text-seal-muted">Referral code</label>
+                <label class="text-xs text-seal-muted">Referred by</label>
                 <input
                     v-model="form.referral_code"
                     type="text"
                     :disabled="referralLocked"
-                    placeholder="Enter a referral code (optional)"
+                    placeholder="Enter the code you were referred with (optional)"
                     class="w-full rounded-lg border border-seal-line px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-seal-navy disabled:bg-seal-paper disabled:text-seal-muted"
                 />
                 <p v-if="referralLocked" class="text-xs text-seal-muted mt-1">

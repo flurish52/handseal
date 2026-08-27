@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useForm, Head } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import ProgrammeList from './Partials/ProgrammeList.vue';
 
 const props = defineProps({
     programmes: { type: Array, required: true },
@@ -17,13 +17,9 @@ const form = useForm({
 
 function submit() {
     if (editingId.value) {
-        form.put(route('programmes.update', editingId.value), {
-            onSuccess: resetForm,
-        });
+        form.put(route('programmes.update', editingId.value), { onSuccess: resetForm });
     } else {
-        form.post(route('programmes.store'), {
-            onSuccess: resetForm,
-        });
+        form.post(route('programmes.store'), { onSuccess: resetForm });
     }
 }
 
@@ -37,12 +33,7 @@ function edit(programme) {
 function resetForm() {
     editingId.value = null;
     form.reset();
-}
-
-function destroy(programme) {
-    if (confirm(`Remove "${programme.name}"? This can't be undone.`)) {
-        form.delete(route('programmes.destroy', programme.id));
-    }
+    form.clearErrors();
 }
 </script>
 
@@ -52,17 +43,25 @@ function destroy(programme) {
     <div class="p-4 space-y-6">
         <h1 class="font-serif text-xl font-semibold text-seal-navy">Programmes</h1>
 
-        <!-- Add / edit form -->
-        <form @submit.prevent="submit" class="bg-white rounded-card border border-seal-line p-4 space-y-3">
+        <form @submit.prevent="submit" class="bg-white rounded-card border border-seal-line p-4 space-y-4">
             <p class="text-sm font-medium text-seal-ink">
                 {{ editingId ? 'Edit programme' : 'Add a programme' }}
             </p>
 
+            <p v-if="form.errors.programme" class="text-xs text-seal-danger bg-red-50 rounded-lg px-3 py-2">
+                {{ form.errors.programme }}
+            </p>
+
             <div>
+                <label for="programme-name" class="block text-xs font-medium text-seal-ink mb-1">
+                    Programme name
+                </label>
                 <input
+                    id="programme-name"
                     v-model="form.name"
                     type="text"
-                    placeholder="Programme name (e.g. Bridal Makeup)"
+                    placeholder="e.g. Bridal Makeup"
+                    :aria-invalid="!!form.errors.name"
                     class="w-full rounded-lg border border-seal-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-seal-navy"
                 />
                 <p v-if="form.errors.name" class="text-xs text-seal-danger mt-1">{{ form.errors.name }}</p>
@@ -70,23 +69,40 @@ function destroy(programme) {
 
             <div class="grid grid-cols-2 gap-3">
                 <div>
-                    <input
-                        v-model="form.price"
-                        type="number"
-                        step="0.01"
-                        placeholder="Price (₦)"
-                        class="w-full rounded-lg border border-seal-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-seal-navy"
-                    />
+                    <label for="programme-price" class="block text-xs font-medium text-seal-ink mb-1">
+                        Price
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-seal-muted">₦</span>
+                        <input
+                            id="programme-price"
+                            v-model="form.price"
+                            type="number"
+                            step="0.01"
+                            placeholder="0.00"
+                            :aria-invalid="!!form.errors.price"
+                            class="w-full rounded-lg border border-seal-line pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-seal-navy"
+                        />
+                    </div>
                     <p v-if="form.errors.price" class="text-xs text-seal-danger mt-1">{{ form.errors.price }}</p>
                 </div>
+
                 <div>
-                    <input
-                        v-model="form.typical_duration"
-                        type="number"
-                        min="1"
-                        placeholder="Duration in weeks (e.g. 6)"
-                        class="w-full rounded-lg border border-seal-line px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-seal-navy"
-                    />
+                    <label for="programme-duration" class="block text-xs font-medium text-seal-ink mb-1">
+                        Duration
+                    </label>
+                    <div class="relative">
+                        <input
+                            id="programme-duration"
+                            v-model="form.typical_duration"
+                            type="number"
+                            min="1"
+                            placeholder="6"
+                            :aria-invalid="!!form.errors.typical_duration"
+                            class="w-full rounded-lg border border-seal-line pl-3 pr-14 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-seal-navy"
+                        />
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-seal-muted">weeks</span>
+                    </div>
                     <p v-if="form.errors.typical_duration" class="text-xs text-seal-danger mt-1">{{ form.errors.typical_duration }}</p>
                 </div>
             </div>
@@ -109,31 +125,6 @@ function destroy(programme) {
                 </button>
             </div>
         </form>
-
-        <!-- List -->
-        <div class="space-y-2">
-            <div
-                v-for="programme in props.programmes"
-                :key="programme.id"
-                class="bg-white rounded-card border border-seal-line p-4 flex items-center justify-between"
-            >
-                <div>
-                    <p class="text-sm font-medium text-seal-ink">{{ programme.name }}</p>
-                    <p class="text-xs text-seal-muted mt-0.5">
-                        <span v-if="programme.price">₦{{ programme.price }}</span>
-                        <span v-if="programme.price && programme.typical_duration"> · </span>
-                        <span v-if="programme.typical_duration">{{ programme.typical_duration }} weeks</span>
-                    </p>
-                </div>
-                <div class="flex gap-3 text-xs font-medium">
-                    <button @click="edit(programme)" class="text-seal-navy">Edit</button>
-                    <button @click="destroy(programme)" class="text-seal-danger">Remove</button>
-                </div>
-            </div>
-
-            <p v-if="props.programmes.length === 0" class="text-sm text-seal-muted text-center py-8">
-                No programmes yet. Add your first one above.
-            </p>
-        </div>
+        <ProgrammeList :programmes="props.programmes" @edit="edit" />
     </div>
 </template>

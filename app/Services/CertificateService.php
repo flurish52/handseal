@@ -124,7 +124,7 @@ class CertificateService
             return $this->renderCustomContent($certificate);
         }
 
-        $key = $certificate->builtin_template_key ?: 'classic-navy';
+        $key = $certificate->builtin_template_key ?: 'portrait-formal';
 
         return view("certificates.builtin.{$key}", [
             'certificate' => $certificate,

@@ -38,20 +38,28 @@ class Certificate extends Model
 
     protected static function booted(): void
     {
-        // Format: {PREFIX}-{INITIALS}{BUSINESS_ID}-{CERT_ID}, e.g. HS-PFT7-000042
-        // Runs after insert so the auto-increment id (CERT_ID, the actual uniqueness guarantee) exists.
+        // Format: {PREFIX}-{BUSINESS_SEQUENCE}-{LOCAL_NUMBER}, e.g. STACKP-000001-000001
+        // local_number is scoped per business, assigned before certificate_number so it exists here.
+        static::creating(function (Certificate $certificate) {
+            $max = static::where('business_id', $certificate->business_id)
+                ->lockForUpdate()
+                ->max('local_number');
+
+            $certificate->local_number = ($max ?? 0) + 1;
+        });
+
         static::created(function (Certificate $certificate) {
             if ($certificate->certificate_number) {
                 return;
             }
 
-            $certPrefix = $certificate->business->certPrefix(); // "JBC" or "HS-PFT" fallback
-            $businessId = $certificate->business_id;
-            $certId = str_pad((string) $certificate->id, config('handseal.cert_id_pad_length'), '0', STR_PAD_LEFT);
+            $certPrefix = $certificate->business->certPrefix();
+            $businessSeq = str_pad((string) $certificate->business->sequence_number, config('handseal.cert_id_pad_length'), '0', STR_PAD_LEFT);
+            $localNum = str_pad((string) $certificate->local_number, config('handseal.cert_id_pad_length'), '0', STR_PAD_LEFT);
 
-            $certificate->certificate_number = "{$certPrefix}{$businessId}-{$certId}";
+            $certificate->certificate_number = "{$certPrefix}-{$businessSeq}-{$localNum}";
             $certificate->saveQuietly();
-        });;
+        });
     }
 
     public function business(): BelongsTo

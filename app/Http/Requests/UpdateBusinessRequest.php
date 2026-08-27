@@ -31,13 +31,21 @@ class UpdateBusinessRequest extends FormRequest
             'cert_prefix' => [
                 'nullable',
                 'string',
-                'alpha:ascii',
                 'min:2',
-                'max:6',
+                'max:16',
+                'regex:/^[a-zA-Z0-9-]+$/',
                 Rule::unique('businesses', 'cert_prefix')
                     ->ignore($this->user()->businesses()->first()?->id),
             ],
             'logo' => ['nullable', 'image', 'mimes:jpeg,png,webp', 'max:5120'],
         ];
     }
+
+
+public function messages(): array
+{
+    return [
+        'cert_prefix.regex' => 'Prefix can only contain letters, numbers, and hyphens — no slashes or other symbols.',
+    ];
+}
 }

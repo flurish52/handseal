@@ -1,7 +1,6 @@
 <script setup>
 import { ref } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
 
 const props = defineProps({
     referralCode: { type: String, required: true },
@@ -52,16 +51,6 @@ function statusClass(referral) {
     return 'bg-seal-muted/15 text-seal-muted';
 }
 
-function activateAccount() {
-    if (isActivating.value) return
-    isActivating.value = true
-
-    router.visit(route('payments.onboarding'), {
-        onFinish: () => {
-            isActivating.value = false
-        },
-    })
-}
 </script>
 
 <template>
@@ -88,37 +77,7 @@ function activateAccount() {
                     </button>
                 </div>
             </div>
-
-            <div v-if="!referrerEligible" class="bg-seal-brass/10 border border-seal-brass/30 rounded-card p-4 flex gap-3">
-                <div class="bg-seal-brass/10 border border-seal-brass/30 rounded-card p-4 flex items-start gap-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-seal-brass shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                    </svg>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-seal-ink">Activate your account to unlock payouts</p>
-                        <p class="text-xs text-seal-muted mt-1">
-                            Your link is already live and earning you credit — activating just unlocks the ability to request payouts. Complete your onboarding payment to activate.
-                        </p>
-                        <button
-                            @click="activateAccount"
-                            :disabled="isActivating"
-                            class="mt-3 bg-seal-brass text-white text-xs font-medium px-4 py-2 rounded-lg hover:bg-seal-brass/90 transition-colors disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
-                        >
-                            <svg
-                                v-if="isActivating"
-                                class="animate-spin h-3.5 w-3.5"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                            >
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                            </svg>
-                            {{ isActivating ? 'Activating…' : 'Activate account' }}
-                        </button>
-                    </div>
-                </div>
-            </div>
+         
 
             <div>
                 <p class="text-sm font-medium text-seal-ink mb-2">Your referrals</p>

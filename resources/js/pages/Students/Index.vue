@@ -5,6 +5,7 @@ import StudentFormModal from '@/Components/StudentFormModal/StudentFormModal.vue
 import IssueCertificateModal from "@/Components/StudentFormModal/IssueCertificateModal.vue";
 import SearchInput from '@/Components/SearchInput.vue';
 import FilterPanel, { buildDefaultFilterValues } from '@/Components/FilterPanel.vue';
+import {useConfirm} from "@/composables/useConfirm.js";
 
 const props = defineProps({
     students: { type: Array, required: true },
@@ -14,6 +15,7 @@ const props = defineProps({
 });
 
 const issuingFor = ref(null);
+const { confirm } = useConfirm();
 
 function openIssueModal(student) {
     issuingFor.value = student;
@@ -36,10 +38,17 @@ function openEditModal(student) {
     modalOpen.value = true;
 }
 
+
 function destroy(student) {
-    if (confirm(`Remove "${student.name}"? This can't be undone.`)) {
+    confirm({
+        title: 'Delete student?',
+        message: `"${student.name}" will be permanently deleted. This can't be undone.`,
+        confirmLabel: 'Delete',
+        variant: 'danger',
+    }).then((ok) => {
+        if (!ok) return;
         router.delete(route('students.destroy', student.id), { preserveScroll: true });
-    }
+    });
 }
 
 function toggleStatus(student) {

@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateProgrammeRequest;
 use App\Models\Programme;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,15 +36,14 @@ class ProgrammeController extends Controller
         return back()->with('success', 'Programme added.');
     }
 
+
     public function update(UpdateProgrammeRequest $request, Programme $programme): RedirectResponse
     {
         $this->authorizeOwnership($programme);
 
-        abort_if(
-            $programme->certificates()->exists(),
-            422,
-            'This programme has certificates issued against it and can no longer be edited. Archive it and create a new programme instead.'
-        );
+        if ($programme->certificates()->exists()) {
+            return back()->with('error', 'This programme has certificates issued against it and can no longer be edited. Archive it and create a new programme instead.');
+        }
 
         $programme->update($request->validated());
 
@@ -72,16 +72,16 @@ class ProgrammeController extends Controller
     {
         $this->authorizeOwnership($programme);
 
-        abort_if(
-            $programme->certificates()->exists(),
-            422,
-            'This programme has certificates issued against it and can\'t be deleted. Archive it instead.'
-        );
+        if ($programme->certificates()->exists()) {
+            return back()->with('error', "This programme has certificates issued against it and can't be deleted. Archive it instead.");
+        }
 
         $programme->delete();
 
         return back()->with('success', 'Programme removed.');
     }
+
+
 
     /**
      * Route-model-bound $programme could belong to any business — always confirm

@@ -32,7 +32,8 @@ class ReferralController extends Controller
                     'reward_percent' => $r->reward_percent,
                     'eligible' => $r->status === 'pending'
                         && $r->referred->businesses()->whereHas('payments', fn ($q) => $q
-                            ->where('type', 'onboarding')
+                            ->where('status', 'successful'))->exists()
+                        && $r->referrer->businesses()->whereHas('payments', fn ($q) => $q
                             ->where('status', 'successful'))->exists(),
                 ]),
         ]);

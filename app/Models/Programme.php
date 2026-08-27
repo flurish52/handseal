@@ -16,6 +16,7 @@ class Programme extends Model
         'name',
         'price',
         'typical_duration',
+        'is_archived',
     ];
 
     protected $casts = [

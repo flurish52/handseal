@@ -94,7 +94,6 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureBusinessExists
         ->name('referrals.request-payout');
 
 
-    Route::get('/payments/onboarding', [PaymentController::class, 'payOnboardingFee'])->name('payments.onboarding');
     Route::get('/payments/callback', [PaymentController::class, 'callback'])->name('payments.callback');
 
     Route::post('/payments/certificate', [PaymentController::class, 'payCertificateFee'])->name('payments.certificate');

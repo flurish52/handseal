@@ -20,6 +20,8 @@ return new class extends Migration
                 ->constrained('students')
                 ->nullOnDelete(); // null for guest certs (is_guest = true)
 
+            $table->unsignedInteger('local_number')->nullable();
+
             $table->foreignId('certificate_template_id')
                 ->nullable()
                 ->constrained('certificate_templates')
@@ -52,6 +54,7 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('business_id');
+            $table->unique(['business_id', 'local_number']);
         });
     }
 
