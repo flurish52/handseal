@@ -11,7 +11,6 @@ const props = defineProps({
 
 const copied = ref(false);
 const requesting = ref(null);
-const isActivating = ref(false)
 
 function copyLink() {
     navigator.clipboard.writeText(props.referralLink);
@@ -27,10 +26,6 @@ function requestPayout(referral) {
     });
 }
 
-// A referral can only show the "Request payout" button when both are true:
-// the referred business has actually paid, AND the referrer themselves is
-// eligible (has made their own onboarding payment). Referring always works
-// regardless of either flag — this only gates the payout request itself.
 function canRequestPayout(referral) {
     return referral.eligible && props.referrerEligible;
 }
@@ -38,8 +33,6 @@ function canRequestPayout(referral) {
 function statusLabel(referral) {
     if (referral.status === 'paid') return 'paid';
     if (referral.status === 'requested') return 'requested';
-
-    // status === 'pending' from here on
     if (referral.eligible && !props.referrerEligible) return 'locked — finish your payment';
     return 'awaiting payment';
 }
@@ -51,66 +44,78 @@ function statusClass(referral) {
     return 'bg-seal-muted/15 text-seal-muted';
 }
 
+// Kobo -> Naira, then the referral's own reward_percent (not assumed to be
+// a fixed 25% — some referrals could carry a different rate).
+function payoutAmount(referral) {
+    if (!referral.first_payment_kobo) return null;
+    const naira = referral.first_payment_kobo / 100;
+    const reward = naira * (referral.reward_percent / 100);
+    return reward.toLocaleString('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 });
+}
 </script>
 
 <template>
     <Head title="Referrals" />
-     <div class="p-4 space-y-6">
-            <h1 class="font-serif text-xl font-semibold text-seal-navy">Referrals</h1>
+    <div class="p-4 space-y-6">
+        <h1 class="font-serif text-xl font-semibold text-seal-navy">Referrals</h1>
 
-            <div class="bg-white rounded-card border border-seal-line p-4 space-y-3">
-                <p class="text-sm text-seal-ink">
-                    Earn <b class="text-seal-brass">25%</b> of any business's first payment when they sign up through your link.
-                </p>
+        <div class="bg-white rounded-card border border-seal-line p-4 space-y-3">
+            <p class="text-sm text-seal-ink">
+                Earn <b class="text-seal-brass">25%</b> of any business's first payment when they sign up through your link.
+            </p>
 
-                <div class="flex gap-2">
-                    <input
-                        readonly
-                        :value="referralLink"
-                        class="flex-1 rounded-lg border border-seal-line px-3 py-2 text-xs font-mono bg-seal-paper"
-                    />
-                    <button
-                        @click="copyLink"
-                        class="bg-seal-navy text-white text-xs font-medium px-3 py-2 rounded-lg whitespace-nowrap"
-                    >
-                        {{ copied ? 'Copied!' : 'Copy' }}
-                    </button>
-                </div>
-            </div>
-         
-
-            <div>
-                <p class="text-sm font-medium text-seal-ink mb-2">Your referrals</p>
-                <div class="space-y-2">
-                    <div
-                        v-for="r in props.referrals"
-                        :key="r.id"
-                        class="bg-white rounded-card border border-seal-line p-4 flex items-center justify-between gap-3"
-                    >
-                        <p class="text-sm text-seal-ink">{{ r.referred_name }}</p>
-
-                        <button
-                            v-if="canRequestPayout(r)"
-                            @click="requestPayout(r)"
-                            :disabled="requesting === r.id"
-                            class="text-xs font-medium px-3 py-1.5 rounded-lg bg-seal-brass text-white disabled:opacity-50"
-                        >
-                            {{ requesting === r.id ? 'Requesting…' : 'Request payout' }}
-                        </button>
-
-                        <span
-                            v-else
-                            class="text-[10px] font-mono uppercase px-2 py-0.5 rounded"
-                            :class="statusClass(r)"
-                        >
-                            {{ statusLabel(r) }}
-                        </span>
-                    </div>
-
-                    <p v-if="props.referrals.length === 0" class="text-sm text-seal-muted text-center py-8">
-                        No referrals yet — share your link above.
-                    </p>
-                </div>
+            <div class="flex gap-2">
+                <input
+                    readonly
+                    :value="referralLink"
+                    class="flex-1 rounded-lg border border-seal-line px-3 py-2 text-xs font-mono bg-seal-paper"
+                />
+                <button
+                    @click="copyLink"
+                    class="bg-seal-navy text-white text-xs font-medium px-3 py-2 rounded-lg whitespace-nowrap"
+                >
+                    {{ copied ? 'Copied!' : 'Copy' }}
+                </button>
             </div>
         </div>
+
+        <div>
+            <p class="text-sm font-medium text-seal-ink mb-2">Your referrals</p>
+            <div class="space-y-2">
+                <div
+                    v-for="r in props.referrals"
+                    :key="r.id"
+                    class="bg-white rounded-card border border-seal-line p-4 flex items-center justify-between gap-3"
+                >
+                    <div>
+                        <p class="text-sm text-seal-ink">{{ r.referred_name }}</p>
+                        <p v-if="payoutAmount(r)" class="text-xs text-seal-brass font-medium mt-0.5">
+                            You'll earn {{ payoutAmount(r) }}
+                        </p>
+                    </div>
+
+                    <button
+                        v-if="canRequestPayout(r)"
+                        @click="requestPayout(r)"
+                        :disabled="requesting === r.id"
+                        class="text-xs font-medium px-3 py-1.5 rounded-lg bg-seal-brass text-white disabled:opacity-50"
+                    >
+                        {{ requesting === r.id ? 'Requesting…' : 'Request payout' }}
+                    </button>
+
+                    <span
+                        v-else
+                        class="text-[10px] font-mono uppercase px-2 py-0.5 rounded"
+                        :class="statusClass(r)"
+                    >
+                        {{ statusLabel(r) }}
+                    </span>
+                </div>
+
+                <p v-if="props.referrals.length === 0" class="text-sm text-seal-muted text-center py-8">
+                    No referrals yet — share your link above.
+                </p>
+            </div>
+        </div>
+    </div>
 </template>

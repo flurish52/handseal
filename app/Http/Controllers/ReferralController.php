@@ -15,27 +15,39 @@ class ReferralController extends Controller
         $user = Auth::user();
 
         $referrerEligible = $user->businesses()
-            ->whereHas('payments', fn ($q) => $q
-                ->where('type', 'onboarding')
-                ->where('status', 'successful'))
+            ->whereHas('payments', fn ($q) => $q->where('status', 'successful'))
             ->exists();
+
+        $referrals = $user->referralsMade()
+            ->with([
+                'referred:id,name',
+                'referred.businesses.payments' => fn ($q) => $q
+                    ->where('status', 'successful')
+                    ->orderBy('paid_at'),
+            ])
+            ->latest()
+            ->get()
+            ->map(function ($r) use ($referrerEligible) {
+                $firstPayment = $r->referred->businesses
+                    ->flatMap(fn ($b) => $b->payments)
+                    ->sortBy('paid_at')
+                    ->first();
+
+                return [
+                    'id' => $r->id,
+                    'referred_name' => $r->referred->name,
+                    'status' => $r->status,
+                    'reward_percent' => $r->reward_percent,
+                    'first_payment_kobo' => $firstPayment?->amount_kobo,
+                    'eligible' => $r->status === 'pending' && $firstPayment !== null && $referrerEligible,
+                ];
+            });
 
         return Inertia::render('Referrals/Index', [
             'referralCode' => $user->referral_code,
             'referralLink' => rtrim(config('app.url'), '/') . '/onboarding?ref=' . $user->referral_code,
             'referrerEligible' => $referrerEligible,
-            'referrals' => $user->referralsMade()->with('referred:id,name')->latest()->get()
-                ->map(fn ($r) => [
-                    'id' => $r->id,
-                    'referred_name' => $r->referred->name,
-                    'status' => $r->status,
-                    'reward_percent' => $r->reward_percent,
-                    'eligible' => $r->status === 'pending'
-                        && $r->referred->businesses()->whereHas('payments', fn ($q) => $q
-                            ->where('status', 'successful'))->exists()
-                        && $r->referrer->businesses()->whereHas('payments', fn ($q) => $q
-                            ->where('status', 'successful'))->exists(),
-                ]),
+            'referrals' => $referrals,
         ]);
     }
 
@@ -51,9 +63,7 @@ class ReferralController extends Controller
 
         $referrerEligible = Auth::user()
             ->businesses()
-            ->whereHas('payments', fn ($q) => $q
-                ->where('type', 'onboarding')
-                ->where('status', 'successful'))
+            ->whereHas('payments', fn ($q) => $q->where('status', 'successful'))
             ->exists();
 
         if (! $referrerEligible) {
@@ -65,9 +75,7 @@ class ReferralController extends Controller
 
         $hasPaid = $referral->referred
             ->businesses()
-            ->whereHas('payments', fn ($q) => $q
-                ->where('type', 'onboarding')
-                ->where('status', 'successful'))
+            ->whereHas('payments', fn ($q) => $q->where('status', 'successful'))
             ->exists();
 
         if (! $hasPaid) {
