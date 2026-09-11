@@ -18,7 +18,7 @@ const form = useForm({
     cert_prefix: props.business.cert_prefix ?? '',
 });
 
-const logoPreview = ref(props.business.logo_url ?? null);
+const logoPreview = ref(`/storage/${props.business.logo_path}` ?? null);
 const isCompressing = ref(false);
 const logoError = ref('');
 
@@ -107,7 +107,8 @@ function submit() {
                     <label class="text-xs text-seal-muted">Business logo</label>
                     <div class="flex items-center gap-3 mt-1">
                         <div v-if="logoPreview" class="w-14 h-14 rounded-lg border border-seal-line overflow-hidden shrink-0">
-                            <img :src="logoPreview" class="w-full h-full object-cover" />
+                            <img :src="logoPreview"
+                                 class="w-full h-full object-cover" />
                         </div>
                         <input
                             type="file"

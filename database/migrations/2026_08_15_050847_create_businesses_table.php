@@ -15,6 +15,7 @@ return new class extends Migration
                 ->constrained('users')
                 ->cascadeOnDelete();
 
+
             $table->unsignedInteger('sequence_number')->unique()->nullable();
             $table->string('business_name');
             $table->string('trade_category')->nullable();
@@ -26,7 +27,6 @@ return new class extends Migration
                 ->default(0);
             $table->unsignedTinyInteger('ai_attempts_remaining')
                 ->default(3);
-            $table->string('default_builtin_template_key')->nullable();
             $table->timestamps();
 
             $table->index('business_name');

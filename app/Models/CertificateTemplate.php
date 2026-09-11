@@ -16,6 +16,13 @@ class CertificateTemplate extends Model
         'name',
         'content',
         'status',
+        'source',
+        'certificate_template_request_id',
+        'is_premium',
+        'price',
+        'thumbnail_path',
+        'is_active',
+        'sort_order',
     ];
 
     protected function casts(): array
@@ -38,5 +45,18 @@ class CertificateTemplate extends Model
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    public function purchases(): HasMany
+    {
+        return $this->hasMany(TemplatePurchase::class);
+    }
+
+    public static function defaultBuiltin(): self
+    {
+        return static::where('source', 'builtin')
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->firstOrFail();
     }
 }

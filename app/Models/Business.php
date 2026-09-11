@@ -23,7 +23,7 @@ class Business extends Model
         'cert_prefix',
         'ai_rejection_count',
         'ai_attempts_remaining',
-        'default_builtin_template_key',
+        'active_certificate_template_id',
     ];
 
     protected $casts = [
@@ -81,6 +81,11 @@ class Business extends Model
         return $this->hasMany(CertificateTemplateRequest::class);
     }
 
+    public function templatePurchases(): HasMany
+    {
+        return $this->hasMany(TemplatePurchase::class);
+    }
+
     /**
      * First letters of up to 3 words in business_name, alpha-only, uppercase.
      * Used to build the readable prefix of certificate_number.
@@ -134,7 +139,8 @@ class Business extends Model
 
     public function hasActiveCustomTemplate(): bool
     {
-        return $this->certificateTemplates()->where('status', 'active')->exists();
+        return $this->certificateTemplates()
+            ->where('status', 'active')->exists();
     }
 
     public function canGenerateAiForFree(): bool
@@ -175,15 +181,9 @@ class Business extends Model
      */
     public function resolvedTemplateSelection(): array
     {
-        $active = $this->certificateTemplates()->where('status', 'active')->first();
-
-        if ($active) {
-            return ['builtin_template_key' => null, 'certificate_template_id' => $active->id];
-        }
-
         return [
-            'builtin_template_key' => $this->default_builtin_template_key ?: 'classic-navy',
-            'certificate_template_id' => null,
+            'certificate_template_id' => $this->active_certificate_template_id
+                ?: CertificateTemplate::defaultBuiltin()->id,
         ];
     }
 

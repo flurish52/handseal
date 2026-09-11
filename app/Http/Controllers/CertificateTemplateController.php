@@ -1,14 +1,14 @@
 <?php
-// app/Http/Controllers/CertificateTemplateController.php
-
 namespace App\Http\Controllers;
 
+use App\Jobs\GenerateTemplateThumbnail;
 use App\Models\CertificateTemplate;
+use App\Services\CertificateService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
-
 use App\Http\Requests\GenerateCertificateTemplateRequest;
 use App\Models\Business;
 use App\Services\GeminiCertificateTemplateService;
@@ -47,23 +47,35 @@ class CertificateTemplateController extends Controller
             ->latest()
             ->get(['id', 'name', 'description', 'status', 'admin_note', 'created_at']);
 
-        $builtins = collect([
-            ['key' => 'classic-navy', 'label' => 'Classic Navy & Brass'],
-            ['key' => 'executive-sidebar', 'label' => 'Executive Sidebar'],
-            ['key' => 'portrait-minimal', 'label' => 'Minimal Modern'],
-            ['key' => 'ornate-gold', 'label' => 'Ornate Gold Seal'],
-            ['key' => 'portrait-formal', 'label' => 'Formal Report'],
-        ])->map(fn (array $builtin) => array_merge($builtin, [
-            'preview_url' => $buildPreviewUrl(['builtin_template_key' => $builtin['key']]),
-        ]));
-
-        $rejectionCount = $business->ai_rejection_count;
+        // Covers builtins AND any future admin-authored premium marketplace
+        // templates — both share business_id = null, status = 'active'.
+        // No separate $builtins query anymore; builtins are just the
+        // non-premium rows in this same set.
+        $marketplace = CertificateTemplate::query()
+            ->whereNull('business_id')
+            ->where('status', 'active')
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'is_premium', 'price', 'thumbnail_path'])
+            ->map(fn (CertificateTemplate $template) => [
+                'id' => $template->id,
+                'name' => $template->name,
+                'is_premium' => $template->is_premium,
+                'price' => $template->price,
+                'price_naira' => $template->price / 100,
+                'thumbnail_url' => $template->thumbnail_path
+                    ? Storage::disk('public')->url($template->thumbnail_path)
+                    : null,
+                // Live render for the preview modal — cheap (plain Blade),
+                // unlike thumbnail_path which is a paid htmlcsstoimage call
+                // and stays reserved for the grid card itself.
+                'preview_url' => $buildPreviewUrl(['certificate_template_id' => $template->id]),
+                'owned' => ! $template->is_premium || $template->purchases()->where('business_id', $business->id)->exists(),
+            ]);
 
         return Inertia::render('CertificateTemplates/Index', [
             'templates' => $templates,
             'requests' => $requests,
-            'builtins' => $builtins,
-            'defaultBuiltinKey' => $business->hasActiveCustomTemplate() ? null : $business->default_builtin_template_key,
+            'activeCertificateTemplateId' => $business->active_certificate_template_id,
             'quota' => [
                 'attempts_remaining' => $business->ai_attempts_remaining,
                 'maxed_out' => $business->ai_attempts_remaining <= 0,
@@ -73,6 +85,8 @@ class CertificateTemplateController extends Controller
                 'can_request_from_admins' => $business->canRequestFromAdmins(),
                 'fee_naira' => config('handseal.custom_cert_fee_kobo') / 100,
             ],
+            'marketplace' => $marketplace,
+            'walletBalanceKobo' => $business->wallet->balance ?? 0,
         ]);
     }
 
@@ -80,15 +94,18 @@ class CertificateTemplateController extends Controller
     {
         $this->authorizeOwnership($certificateTemplate);
 
-        // Enforce "one active template" — without this, activating a second
-        // template left both active, and resolvedTemplateSelection() would
-        // pick whichever the query happened to return first.
-        $certificateTemplate->business->certificateTemplates()
+        $business = Auth::user()->businesses()->firstOrFail();
+
+
+        $business->certificateTemplates()
             ->where('id', '!=', $certificateTemplate->id)
             ->where('status', 'active')
             ->update(['status' => 'inactive']);
 
         $certificateTemplate->update(['status' => 'active']);
+        $business->active_certificate_template_id = $certificateTemplate->id;
+        $business->save();
+        GenerateTemplateThumbnail::dispatch($certificateTemplate);
 
         return back()->with('success', 'This is now used for every certificate you issue.');
     }
@@ -128,15 +145,25 @@ class CertificateTemplateController extends Controller
         return back()->with('success', 'Draft ready, review it below.');
     }
 
+
     public function reject(CertificateTemplate $certificateTemplate): RedirectResponse
     {
         $this->authorizeOwnership($certificateTemplate);
         abort_if($certificateTemplate->status !== 'draft', 422, 'Only pending drafts can be rejected.');
 
-        $certificateTemplate->update(['status' => 'rejected']);
+        if ($certificateTemplate->thumbnail_path) {
+            Storage::disk('public')->delete($certificateTemplate->thumbnail_path);
+        }
+
+        $certificateTemplate->update([
+            'status' => 'rejected',
+            'thumbnail_path' => null,
+        ]);
 
         return back()->with('success', 'Marked as rejected. You can still accept it later, or generate again if you have attempts left.');
     }
+
+
     private function checkGenerationQuota(Business $business): array
     {
         if ($business->certificateTemplates()->where('status', 'active')->exists()) {
@@ -159,6 +186,9 @@ class CertificateTemplateController extends Controller
 
     public function destroy(CertificateTemplate $certificateTemplate): RedirectResponse
     {
+        abort_if($certificateTemplate->business_id === null, 403,
+            'Marketplace templates can\'t be deleted.');
+
         $this->authorizeOwnership($certificateTemplate);
 
         abort_if(
@@ -167,17 +197,32 @@ class CertificateTemplateController extends Controller
             'This template has certificates issued with it and can\'t be deleted.'
         );
 
+        $business = Auth::user()->businesses()->firstOrFail();
+        $wasActive = $business->active_certificate_template_id === $certificateTemplate->id;
+
         $certificateTemplate->delete();
+
+        if ($wasActive) {
+            $business->update(['active_certificate_template_id' => CertificateTemplate::defaultBuiltin()->id]);
+        }
 
         return back()->with('success', 'Template removed.');
     }
 
     private function authorizeOwnership(CertificateTemplate $certificateTemplate): void
     {
-        abort_unless(
-            $certificateTemplate->business_id === Auth::user()->businesses()->firstOrFail()->id,
-            403
-        );
+        $business = Auth::user()->businesses()->firstOrFail();
+
+        $owned = $certificateTemplate->business_id === $business->id
+            || (
+                $certificateTemplate->business_id === null
+                && (
+                    ! $certificateTemplate->is_premium
+                    || $certificateTemplate->purchases()->where('business_id', $business->id)->exists()
+                )
+            );
+
+        abort_unless($owned, 403);
     }
 
     public function setDefaultBuiltin(\Illuminate\Http\Request $request): RedirectResponse
@@ -193,5 +238,14 @@ class CertificateTemplateController extends Controller
         $business->update(['default_builtin_template_key' => $validated['builtin_template_key']]);
 
         return back()->with('success', 'Default template updated.');
+    }
+
+    public function previewDraft(CertificateTemplate $certificateTemplate, CertificateService $certificateService): \Illuminate\Http\Response
+    {
+        $this->authorizeOwnership($certificateTemplate);
+
+        $html = $certificateService->renderSample($certificateTemplate);
+
+        return response($html, 200, ['Content-Type' => 'text/html']);
     }
 }

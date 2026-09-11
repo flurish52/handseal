@@ -15,7 +15,7 @@ return new class extends Migration
                 ->constrained('businesses')
                 ->cascadeOnDelete();
 
-            $table->enum('type', ['certificate', 'subscription', 'funding', 'template_fee']);
+            $table->enum('type', ['certificate', 'subscription', 'funding', 'template_fee', 'template_purchase']);
             $table->unsignedInteger('amount_kobo');
             $table->string('paystack_reference')->nullable()->unique();
             $table->enum('status', ['pending', 'successful', 'failed'])->default('pending');

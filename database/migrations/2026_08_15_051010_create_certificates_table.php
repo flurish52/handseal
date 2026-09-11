@@ -27,8 +27,6 @@ return new class extends Migration
                 ->constrained('certificate_templates')
                 ->nullOnDelete(); // set when a custom template was used
 
-            $table->string('builtin_template_key')->nullable(); // set when one of the 5 built-in presets was used instead
-
             $table->foreignId('programme_id')
                 ->constrained('programmes')
                 ->restrictOnDelete(); // a programme can't be deleted once certificates reference it

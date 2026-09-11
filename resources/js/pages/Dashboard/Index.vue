@@ -1,4 +1,3 @@
-<!-- resources/js/Pages/Dashboard.vue -->
 <script setup>
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';

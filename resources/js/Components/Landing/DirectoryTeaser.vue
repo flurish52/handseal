@@ -41,8 +41,9 @@ defineProps({
                     :href="route('directory.index') + '#business-' + business.id"
                     class="rounded-xl border border-seal-line-dark bg-seal-navy-2 p-5 transition hover:border-seal-brass-light/50"
                 >
-                    <div class="mb-1 font-serif text-base font-semibold">{{ business.name }}</div>
-                    <div class="text-xs text-seal-muted-dark">{{ business.trade || business.category }}</div>
+                    <div class="mb-1 font-serif text-base font-semibold">{{ business?.business_name }}</div>
+                    <div class="text-xs text-seal-muted-dark">{{ business.trade_category }}</div>
+                    <div class="text-xs text-seal-muted-dark italic">{{ business.address }}</div>
                 </Link>
             </div>
 

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Business;
+use App\Models\CertificateTemplate;
 use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\Student;
 use App\Models\Subscription;
+use App\Models\TemplatePurchase;
 use App\Services\CertificateEligibilityService;
 use App\Services\CertificateService;
 use App\Services\PaystackService;
@@ -16,6 +18,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
 
 class PaymentController extends Controller
@@ -100,7 +103,6 @@ class PaymentController extends Controller
             'programme_id' => 'nullable|exists:programmes,id',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
-            'builtin_template_key' => 'nullable|string',
             'certificate_template_id' => 'nullable|exists:certificate_templates,id',
         ]);
 
@@ -321,16 +323,18 @@ class PaymentController extends Controller
                     ? app(CertificateService::class)->issueForStudent(
                         $payment->business,
                         Student::findOrFail($studentId),
-                        $this->templateSelectionOnly($payment->metadata)
+                        $payment->business->resolvedTemplateSelection()
                     )
-                    : app(CertificateService::class)->issueGuest($payment->business, $payment->metadata);
+                    : app(CertificateService::class)->issueGuest(
+                        $payment->business,
+                        array_merge($payment->metadata, $payment->business->resolvedTemplateSelection())
+                    );
 
                 $payment->update(['certificate_id' => $certificate->id]);
             } catch (\Throwable $e) {
                 report($e);
             }
         }
-
         if ($payment->type === 'template_fee' && ($payment->metadata['purpose'] ?? null) === 'new_cycle') {
             $payment->business->update(['ai_attempts_remaining' => 3]);
         }
@@ -340,6 +344,21 @@ class PaymentController extends Controller
 
             if ($requestId) {
                 \App\Models\CertificateTemplateRequest::where('id', $requestId)->update(['status' => 'pending']);
+            }
+        }
+
+
+        if ($payment->type === 'template_purchase' && $payment->metadata) {
+            $templateId = $payment->metadata['certificate_template_id'] ?? null;
+
+            if ($templateId) {
+                // firstOrCreate, not create — webhook and callback can both fire for
+                // the same payment, and the unique(business_id, certificate_template_id)
+                // constraint would otherwise throw on the second one.
+                    TemplatePurchase::firstOrCreate(
+                    ['business_id' => $payment->business_id, 'certificate_template_id' => $templateId],
+                    ['price_paid' => $payment->amount_kobo, 'payment_method' => 'paystack', 'purchased_at' => now()]
+                );
             }
         }
     }
@@ -386,4 +405,73 @@ class PaymentController extends Controller
             ['payment_id' => $payment->id]
         );
     }
-}
+
+    public function payTemplatePurchase(CertificateTemplate $certificateTemplate, PaystackService $paystack): Response
+    {
+        $business = Auth::user()->businesses()->firstOrFail();
+
+        abort_unless($certificateTemplate->business_id === null, 403, 'This template is not available for purchase.');
+        abort_unless($certificateTemplate->is_premium, 422, 'This template is free — use it directly.');
+        abort_if(
+            $certificateTemplate->purchases()->where('business_id', $business->id)->exists(),
+            422,
+            'You already own this template.'
+        );
+
+        return $this->initiatePayment(
+            'template_purchase',
+            $certificateTemplate->price,
+            $paystack,
+            metadata: ['certificate_template_id' => $certificateTemplate->id],
+            returnTo: route('certificate-templates.index')
+        );
+    }
+
+
+    public function payTemplatePurchaseFromWalletBalance(CertificateTemplate $certificateTemplate): RedirectResponse
+    {
+        $business = Auth::user()->businesses()->firstOrFail();
+
+        abort_unless($certificateTemplate->business_id === null, 403, 'This template is not available for purchase.');
+        abort_unless($certificateTemplate->is_premium, 422, 'This template is free — use it directly.');
+        abort_if(
+            $certificateTemplate->purchases()->where('business_id', $business->id)->exists(),
+            422,
+            'You already own this template.'
+        );
+
+        $wallet = $business->wallet;
+
+        if (! $wallet) {
+            return back()->with('error', 'No wallet found — fund your wallet first or pay by card.');
+        }
+
+        try {
+            $transaction = $wallet->debit($certificateTemplate->price, 'template_purchase', [
+                'certificate_template_id' => $certificateTemplate->id,
+            ]);
+        } catch (RuntimeException $e) {
+            return back()->with('error', 'Insufficient wallet balance for this template.');
+        }
+
+        try {
+            DB::transaction(function () use ($certificateTemplate, $business) {
+                $certificateTemplate->purchases()->create([
+                    'business_id' => $business->id,
+                    'price_paid' => $certificateTemplate->price,
+                    'payment_method' => 'wallet',
+                    'purchased_at' => now(),
+                ]);
+            });
+        } catch (\Throwable $e) {
+            $wallet->credit($certificateTemplate->price, 'template_purchase_failed', [
+                'certificate_template_id' => $certificateTemplate->id,
+                'failed_transaction_id' => $transaction->id,
+            ]);
+            report($e);
+
+            return back()->with('error', 'Payment succeeded but the purchase could not be recorded. Your wallet has been refunded.');
+        }
+
+        return back()->with('success', 'Template purchased — use it any time from your gallery.');
+    }}

@@ -45,7 +45,7 @@ function sourceLabel(source) {
             >
                 <div
                     class="relative h-28 bg-seal-line/20 overflow-hidden cursor-pointer group"
-                    @click="emit('preview', template.name, template.preview_url)"
+                    @click="emit('preview', template.id)"
                 >
                     <iframe
                         v-if="template.preview_url"

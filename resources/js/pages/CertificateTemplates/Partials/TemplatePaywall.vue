@@ -1,18 +1,19 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { router } from '@inertiajs/vue3';
+import {ref, computed} from 'vue';
+import {router} from '@inertiajs/vue3';
 import PaywallModal from '@/Components/PaywallModal.vue';
 
 const props = defineProps({
-    message: { type: String, required: true },
-    feeNaira: { type: [Number, String], required: true },
+    message: {type: String, required: true},
+    feeNaira: {type: [Number, String], required: true},
 });
 defineEmits(['close']);
 
 const paying = ref(false);
+
 function payToReset() {
     paying.value = true;
-    router.post(route('payments.custom-cert-fee'), {}, { onFinish: () => (paying.value = false) });
+    router.post(route('payments.custom-cert-fee'), {}, {onFinish: () => (paying.value = false)});
 }
 
 const actions = computed(() => [{
@@ -22,8 +23,9 @@ const actions = computed(() => [{
 </script>
 
 <template>
-    <PaywallModal title="AI template limit reached"
-                  :message="message"
-                  :actions="actions"
-                  @close="$emit('close')" />
+    <PaywallModal
+        title="AI template limit reached"
+        :message="message"
+        :actions="actions"
+        @close="$emit('close')"/>
 </template>

@@ -1,6 +1,4 @@
 <?php
-// app/Models/CertificateTemplateRequest.php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -17,6 +15,7 @@ class CertificateTemplateRequest extends Model
         'status',
         'admin_note',
         'reviewed_at',
+        'thumbnail_path',
     ];
 
     protected $casts = [

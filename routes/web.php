@@ -3,7 +3,6 @@
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BusinessController;
-use App\Http\Controllers\BusinessTemplateController;
 use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CertificateTemplateController;
 use App\Http\Controllers\CertificateTemplateRequestController;
@@ -47,15 +46,14 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])->
 //Onboarding route was suppose to be an auth route but was added here because of the sessions it was loosing due to captureReferralCode not running before auth middleware
 Route::get('/onboarding', [BusinessController::class, 'create'])->name('business.create');
 
-Route::get('/certificates/preview', [CertificateController::class, 'preview'])->name('certificates.preview');
-Route::get('/certificates/guest/preview', [CertificateController::class, 'previewGuest'])->name('certificates.guest.preview');
+
 Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
 
 
-
-
-
 Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureBusinessExists::class])->group(function () {
+    Route::get('/certificates/preview', [CertificateController::class, 'preview'])->name('certificates.preview');
+    Route::get('/certificates/guest/preview', [CertificateController::class, 'previewGuest'])->name('certificates.guest.preview');
+
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::get('/programmes', [ProgrammeController::class, 'index'])->name('programmes.index');
@@ -107,6 +105,12 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureBusinessExists
     Route::post('/payments/from-wallet', [PaymentController::class, 'payCertificateFeeFromWalletBalance'])
         ->name('payments.certificate.wallet');
 
+    Route::post('/payments/template-purchase/{certificateTemplate}', [PaymentController::class, 'payTemplatePurchase'])
+        ->name('payments.template-purchase');
+
+    Route::post('/payments/template-purchase-wallet/{certificateTemplate}', [PaymentController::class, 'payTemplatePurchaseFromWalletBalance'])
+        ->name('payments.template-purchase-wallet');
+
 // Business-facing
     Route::get('/certificate-templates', [CertificateTemplateController::class, 'index'])
         ->name('certificate-templates.index');
@@ -133,10 +137,13 @@ Route::middleware(['auth', 'verified', \App\Http\Middleware\EnsureBusinessExists
     Route::post('/pay/template-request-fee', [PaymentController::class, 'payTemplateRequestFee'])
         ->name('payments.template-request-fee');
 
-        Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
 
     Route::post('/certificate-templates/default-builtin', [CertificateTemplateController::class, 'setDefaultBuiltin'])
         ->name('certificate-templates.default-builtin');
+
+    Route::get('/certificate-templates/{certificateTemplate}/preview-draft', [CertificateTemplateController::class, 'previewDraft'])
+        ->name('certificate-templates.preview-draft');
 });
 
 Route::middleware('auth')->group(function () {

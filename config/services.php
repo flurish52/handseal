@@ -50,6 +50,11 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
 
+    'htmlcsstoimage' => [
+        'user_id' => env('HCTI_USER_ID'),
+        'api_key' => env('HCTI_API_KEY'),
+    ],
+
 
 
 ];

@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Business;
 use App\Models\Certificate;
+use App\Models\CertificateTemplate;
+use App\Models\Programme;
 use App\Models\Student;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Blade;
@@ -33,7 +35,7 @@ class CertificateService
                 'end_date' => $student->end_at ?? now(),
                 'is_guest' => false,
                 'issued_at' => now(),
-                ...$templateSelection, // certificate_template_id OR builtin_template_key
+                ...$templateSelection, // certificate_template_id
             ]);
 
             $certificate->refresh(); // pick up certificate_number set by the created() hook
@@ -45,10 +47,6 @@ class CertificateService
         });
     }
 
-    /**
-     * Renders the certificate to a downloadable PDF. Never calls Gemini here —
-     * custom template content was generated once, at template-creation time.
-     */
     /**
      * Issues a certificate for an untracked (guest) recipient. No Student row —
      * name comes straight from the form, and student_id stays null.
@@ -64,8 +62,7 @@ class CertificateService
                 'end_date' => $data['end_date'],
                 'is_guest' => true,
                 'issued_at' => now(),
-                'builtin_template_key' => $data['builtin_template_key'] ?? null,
-                'certificate_template_id' => $data['certificate_template_id'] ?? null,
+                'certificate_template_id' => $data['certificate_template_id'],
             ]);
 
             $certificate->refresh();
@@ -77,6 +74,10 @@ class CertificateService
         });
     }
 
+    /**
+     * Renders the certificate to a downloadable PDF. Never calls Gemini here —
+     * custom template content was generated once, at template-creation time.
+     */
     public function renderPdf(Certificate $certificate): \Barryvdh\DomPDF\PDF
     {
         $html = $this->buildHtml($certificate);
@@ -101,7 +102,6 @@ class CertificateService
             'is_guest' => false,
             'issued_at' => now(),
             'certificate_number' => 'PREVIEW',
-            'builtin_template_key' => $templateSelection['builtin_template_key'] ?? null,
             'certificate_template_id' => $templateSelection['certificate_template_id'] ?? null,
         ]);
 
@@ -111,31 +111,26 @@ class CertificateService
         $certificate->setRelation('programme', $student->programme);
 
         if ($certificate->certificate_template_id) {
-            $template = $business->certificateTemplates()->findOrFail($certificate->certificate_template_id);
+            $template = CertificateTemplate::findOrFail($certificate->certificate_template_id);
+
+            // Preview access is intentionally looser than "use" access:
+            // anyone can preview a platform template (builtin or
+            // marketplace, purchased or not) to decide whether to buy it.
+            // Only another business's private custom draft stays blocked.
+            abort_unless(
+                $template->business_id === null || $template->business_id === $business->id,
+                403
+            );
+
             $certificate->setRelation('certificateTemplate', $template);
         }
 
         return $this->buildHtml($certificate);
     }
 
-    private function buildHtml(Certificate $certificate): string
-    {
-        if ($certificate->certificate_template_id) {
-            return $this->renderCustomContent($certificate);
-        }
-
-        $key = $certificate->builtin_template_key ?: 'portrait-formal';
-
-        return view("certificates.builtin.{$key}", [
-            'certificate' => $certificate,
-        ])->render();
-    }
-
-
     public function renderGuestPreview(Business $business, array $data): string
     {
         $programme = $business->programmes()->find($data['programme_id']);
-
         $certificate = new Certificate([
             'student_id' => null,
             'programme_id' => $data['programme_id'],
@@ -145,21 +140,65 @@ class CertificateService
             'is_guest' => true,
             'issued_at' => now(),
             'certificate_number' => 'PREVIEW',
-            'builtin_template_key' => $data['builtin_template_key'] ?? null,
             'certificate_template_id' => $data['certificate_template_id'] ?? null,
         ]);
+
 
         $certificate->business_id = $business->id;
         $certificate->setRelation('business', $business);
         $certificate->setRelation('programme', $programme);
 
         if ($certificate->certificate_template_id) {
-            $template = $business->certificateTemplates()->findOrFail($certificate->certificate_template_id);
+            $template = CertificateTemplate::findOrFail($certificate->certificate_template_id);
+
+            // Same relaxed rule as renderPreview() above — preview access
+            // doesn't require ownership/purchase, only "use" (activate)
+            // does. Otherwise nobody could preview a premium marketplace
+            // template before buying it.
+            abort_unless(
+                $template->business_id === null || $template->business_id === $business->id,
+                403
+            );
+
             $certificate->setRelation('certificateTemplate', $template);
         }
 
         return $this->buildHtml($certificate);
     }
+
+    /**
+     * Renders a template with fully synthetic data — no real Business, Student,
+     * or QR involved. Used for marketplace thumbnails, where the image is shared
+     * across every business rather than personalized to one. Reuses
+     * renderCustomContent() directly since every template (builtin or custom)
+     * now lives in certificate_templates with the same content/Blade shape.
+     */
+    public function renderSample(CertificateTemplate $template): string
+    {
+        $certificate = new Certificate([
+            'recipient_name' => 'Sample Recipient',
+            'start_date' => now()->subMonths(6),
+            'end_date' => now(),
+            'certificate_number' => 'SAMPLE-000000',
+            'is_guest' => true,
+        ]);
+
+        $certificate->certificate_template_id = $template->id;
+        $certificate->setRelation('business', new Business(['business_name' => 'Sample Business']));
+        $certificate->setRelation('programme', new Programme(['name' => 'Sample Programme']));
+        $certificate->setRelation('certificateTemplate', $template);
+
+        // qr_path stays unset on purpose — qrBase64() returns null cleanly,
+        // and builtin/custom views already guard the QR block with @if/??.
+
+        return $this->renderCustomContent($certificate);
+    }
+
+    private function buildHtml(Certificate $certificate): string
+    {
+        return $this->renderCustomContent($certificate);
+    }
+
     private function renderCustomContent(Certificate $certificate): string
     {
         return Blade::render(

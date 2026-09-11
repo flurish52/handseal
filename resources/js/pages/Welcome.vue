@@ -23,7 +23,8 @@ const props = defineProps({
         <HowItWorks/>
         <VerifyWidget/>
         <TradesStrip/>
-        <DirectoryTeaser :featured-businesses="featuredBusinesses"/>
+        <DirectoryTeaser
+            :featured-businesses="featuredBusinesses"/>
     <PricingSection
         :can-register="canRegister"
         :plans="plans"
