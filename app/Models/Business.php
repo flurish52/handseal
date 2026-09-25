@@ -32,6 +32,7 @@ class Business extends Model
         'owner_id' => 'integer',
         'ai_attempts_remaining' => 'integer',
         'ai_rejection_count' => 'integer',
+        'active_certificate_template_id' => 'integer',
     ];
 
     protected $appends = ['logo_url', 'initials'];

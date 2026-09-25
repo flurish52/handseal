@@ -35,7 +35,7 @@ class CertificateService
                 'end_date' => $student->end_at ?? now(),
                 'is_guest' => false,
                 'issued_at' => now(),
-                ...$templateSelection, // certificate_template_id
+                'certificate_template_id' => $business->active_certificate_template_id,
             ]);
 
             $certificate->refresh(); // pick up certificate_number set by the created() hook
@@ -62,7 +62,7 @@ class CertificateService
                 'end_date' => $data['end_date'],
                 'is_guest' => true,
                 'issued_at' => now(),
-                'certificate_template_id' => $data['certificate_template_id'],
+                'certificate_template_id' => $business->active_certificate_template_id,
             ]);
 
             $certificate->refresh();
